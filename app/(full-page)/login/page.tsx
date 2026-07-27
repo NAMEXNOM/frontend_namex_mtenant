@@ -35,7 +35,10 @@ const ejecutarLogin = async (e?: React.FormEvent) => {
         //const res = await fetch('http://localhost:5000/auth/login', {
         const res = await fetch(`${API_URL}/auth/login`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-Tenant-ID': 'empresademo' // 🟢 OBLIGATORIO: Para que el middleware local no truene al buscar en AWS
+            },
             body: JSON.stringify({ userRFC, password })
         });
 

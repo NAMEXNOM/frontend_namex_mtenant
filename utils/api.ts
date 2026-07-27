@@ -13,13 +13,18 @@ export const fetchCustom = async (endpoint: string, options: RequestInit = {}) =
 
 const getApiUrl = (): string => {
   if (typeof window !== 'undefined') {
-    const hostname = window.location.hostname; // Extrae "empresademo.namexportal.com"
+    const hostname = window.location.hostname; // Extrae "localhost" o "empresademo.namexportal.com"
     
-    // 🚨 FIX DE EMERGENCIA: Forzamos HTTP plano para evadir el bloqueo de certificados en la demo
+    // 🟢 NUEVO: Si estás en tu computadora local, apunta al NestJS del puerto 5000 sin el /api
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'http://localhost:5000';
+    }
+
+    // 🚨 CONFIGURACIÓN PARA AWS PRODUCCIÓN: Forzamos HTTP plano para evadir el bloqueo de certificados en la demo
     return `http://${hostname}/api`;
   }
   
-  return 'http://127.0.0';
+  return 'http://localhost:5000'; // Respaldo para renderizado del lado del servidor (SSR)
 };
 
 export const API_URL = getApiUrl();
