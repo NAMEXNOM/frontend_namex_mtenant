@@ -1,21 +1,22 @@
 import axios from 'axios';
 
 const getApiUrl = (): string => {
+  // 🟢 1. CÓDIGO DEL LADO DEL CLIENTE (Navegador)
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
     
-    // Si estás desarrollando en tu PC local
+    // Si estás desarrollando localmente en tu PC de casa
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
       return 'http://localhost:5000';
     }
 
-    // En producción: Usamos la ruta relativa limpia de Nginx
+    // En producción en AWS: Usamos la ruta relativa limpia de Nginx
     return '/api';
   }
   
-  // 🟢 CORRECCIÓN PARA EL SERVIDOR (SSR): 
-  // En lugar de localhost:5000 fijo, usamos ruta relativa para que no fuerce la demo en el backend
-  return '/api'; 
+  // 🟢 2. CÓDIGO DEL LADO DEL SERVIDOR (SSR de Next.js en AWS)
+  // Apunta directo al puerto interno de NestJS para que la página cargue sin colapsar
+  return 'http://127.0.0.1:5000'; 
 };
 
 export const API_URL = getApiUrl();
@@ -25,7 +26,7 @@ export const api = axios.create({
   withCredentials: true,
 });
 
-// Interceptor molecular que inyecta la cabecera en cada petición
+// Interceptor molecular que inyecta la cabecera en cada petición del navegador
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
