@@ -26,26 +26,27 @@ export default function LoginPage() {
 
         setLoading(true);
         try {
-            // 🟢 CALCULAMOS LAS URLS Y ENCABEZADOS ESTRICTAMENTE EN EL NAVEGADOR (EVITA CRASH EN EL BUILD)
+            // 🟢 LÓGICA DE DETECCIÓN MOLECULAR DE SUBDOMINIO
             let currentTenant = 'empresademo'; 
-            let targetApiUrl = '/api'; // Ruta relativa por defecto para producción
+            let targetApiUrl = '/api'; 
 
             if (typeof window !== 'undefined') {
                 const hostname = window.location.hostname;
                 const parts = hostname.split('.');
 
-                // Si es desarrollo local en tu PC de casa
+                // 1. Caso de desarrollo local en tu PC de casa
                 if (hostname === 'localhost' || hostname === '127.0.0.1') {
                     targetApiUrl = 'http://localhost:5000';
                 } 
-                // Si estamos en producción con tu dominio real de AWS
+                // 2. Caso de producción en AWS: Extraemos solo si hay un subdominio real por delante
                 else if (hostname.includes('namexportal.com') && parts.length > 2) {
-                    currentTenant = parts[0]; // Captura "empresa_a" o "empresademo"
-                    targetApiUrl = '/api'; // Forzamos ruta relativa para Nginx
+                    // Si el subdominio es "www", lo ignoramos y usamos la demo
+                    currentTenant = parts[0] !== 'www' ? parts[0] : 'empresademo';
+                    targetApiUrl = '/api'; 
                 }
             }
 
-            // 🎯 REALIZAMOS LA PETICIÓN CON LOS VALORES CALCULADOS EN TIEMPO DE CLIC
+            // 🎯 REALIZAMOS LA PETICIÓN CON LA CABECERA GARANTIZADA
             const res = await fetch(`${targetApiUrl}/auth/login`, {
                 method: 'POST',
                 headers: { 
@@ -64,23 +65,21 @@ export default function LoginPage() {
                 return; 
             }
 
-            // Guardar los datos en el Contexto de Autenticación
+            // 🟢 SOLUCIÓN AL BUILD: Mandamos únicamente los campos nativos y válidos a tu AuthContext original
             login({ 
                 userName: data.userName,      
                 token: data.access_token,     
                 userBalance: data.userBalance,
-                vacationsTaken: data.vacationsTaken,
-                userId: data.userId,
-                firstTimeLoad: data.firstTimeLoad, 
-                status: data.status               
+                userId: data.userId
             });
 
-            // Guardar Cookies individuales en texto plano
+            // 🟢 Guardar las banderas extendidas en cookies (Aquí no causan errores de TypeScript)
             document.cookie = `namex_userId=${data.userId}; path=/; max-age=86400; SameSite=Lax`;
             document.cookie = `namex_firstTimeLoad=${data.firstTimeLoad}; path=/; max-age=86400; SameSite=Lax`;
             document.cookie = `namex_status=${data.status}; path=/; max-age=86400; SameSite=Lax`;
+            document.cookie = `namex_vacationsTaken=${data.vacationsTaken}; path=/; max-age=86400; SameSite=Lax`;
 
-            // Redirección inteligente
+            // Redirección inteligente basada en los datos de la respuesta
             const esPrimerIngreso = data.firstTimeLoad === true || data.firstTimeLoad === 'true';
             const esEstatusTemporal = data.status === 'TEMPORAL' || data.status === 'temporal';
 
