@@ -65,15 +65,17 @@ export default function LoginPage() {
                 return; 
             }
 
-            // 🟢 SOLUCIÓN AL BUILD: Mandamos únicamente los campos nativos y válidos a tu AuthContext original
+                        // 🟢 SOLUCIÓN DEFINITIVA AL BUILD: 
+            // Enviamos las 4 propiedades estrictamente requeridas por tu interfaz 'User'
             login({ 
                 userName: data.userName,      
                 token: data.access_token,     
                 userBalance: data.userBalance,
-                userId: data.userId
+                vacationsTaken: data.vacationsTaken, // 👈 Reintegrado aquí como campo requerido
+                userId: data.userId,
             });
 
-            // 🟢 Guardar las banderas extendidas en cookies (Aquí no causan errores de TypeScript)
+            // Guardar Cookies individuales en texto plano (Esto se queda igual, es seguro)
             document.cookie = `namex_userId=${data.userId}; path=/; max-age=86400; SameSite=Lax`;
             document.cookie = `namex_firstTimeLoad=${data.firstTimeLoad}; path=/; max-age=86400; SameSite=Lax`;
             document.cookie = `namex_status=${data.status}; path=/; max-age=86400; SameSite=Lax`;
