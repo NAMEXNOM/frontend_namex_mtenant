@@ -32,17 +32,31 @@ const ejecutarLogin = async (e?: React.FormEvent) => {
 
     setLoading(true);
     try {
-        //const res = await fetch('http://localhost:5000/auth/login', {
+        // 🟢 1. EXTRACTOR DINÁMICO DE TENANT PARA FETCH
+        let currentTenant = 'empresademo'; // Valor local por defecto
+        if (typeof window !== 'undefined') {
+            const hostname = window.location.hostname;
+            const parts = hostname.split('.');
+            if (hostname.includes('namexportal.com') && parts.length > 2) {
+                currentTenant = parts[0]; // Captura en caliente "empresa_a" o "empresademo"
+            }
+        }
+
+        // 2. Realizar la petición inyectando la variable calculada
         const res = await fetch(`${API_URL}/auth/login`, {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
-                'X-Tenant-ID': 'empresademo' // 🟢 OBLIGATORIO: Para que el middleware local no truene al buscar en AWS
+                // 🎯 REEMPLAZADO: Ahora es 100% dinámico y automático
+                'X-Tenant-ID': currentTenant 
             },
             body: JSON.stringify({ userRFC, password })
         });
 
         const data = await res.json(); 
+        
+        // ... (El resto de tu lógica de login, cookies y redirección se queda EXACTAMENTE igual) ...
+
 
         // 1. Verificación estricta del Estatus de Red y del objeto de NestJS
         if (!res.ok || data.status === 404 || data.status === 401 || data.name === 'HttpException') {
