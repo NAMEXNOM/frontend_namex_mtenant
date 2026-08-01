@@ -1,7 +1,6 @@
 'use client';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-// 1. Agregamos las variables de control al tipo User
 interface User {
   userName: string; 
   token: string;
@@ -9,8 +8,8 @@ interface User {
   userBalance: number;
   vacationsTaken: number;
   userId: string;
-  firstTimeLoad?: boolean | string; // 🚨 NUEVO
-  status?: string;                  // 🚨 NUEVO
+  firstTimeLoad?: boolean | string; // Control estricto de primer ingreso
+  status?: string;                  // Control de estatus en base de datos
 }
 
 interface AuthContextType {
@@ -40,18 +39,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(false);
   }, []);
 
+  
   const login = (userData: User) => {
     setUser(userData);
     localStorage.setItem('userSession', JSON.stringify(userData));
     
-    document.cookie = `token=${userData.token}; path=/; max-age=86400; SameSite=Lax`;
+    // Calcular 1 hora para Safari
+    const ahora = new Date();
+    ahora.setTime(ahora.getTime() + (1 * 60 * 60 * 1000));
+    const tiempoExpires = ahora.toUTCString();
+
+    document.cookie = `token=${userData.token}; path=/; expires=${tiempoExpires}; SameSite=Lax`;
+    document.cookie = `namex_firstTimeLoad=${userData.firstTimeLoad}; path=/; expires=${tiempoExpires}; SameSite=Lax`;
+    document.cookie = `namex_status=${userData.status}; path=/; expires=${tiempoExpires}; SameSite=Lax`;
   };
+  
+  /*
+  const login = (userData: User) => {
+    // 🎯 FUSIÓN ABSOLUTA: Guardamos todo el objeto incluyendo variables de control
+    setUser(userData);
+    localStorage.setItem('userSession', JSON.stringify(userData));
+    
+    // Inyección de cookies base para el Middleware de Next.js
+    document.cookie = `token=${userData.token}; path=/; max-age=1800; SameSite=Lax`;
+    document.cookie = `namex_firstTimeLoad=${userData.firstTimeLoad}; path=/; max-age=1800; SameSite=Lax`;
+    document.cookie = `namex_status=${userData.status}; path=/; max-age=1800; SameSite=Lax`;
+  };
+*/
 
   const logout = () => {
     setUser(null);
     localStorage.removeItem('userSession');
 
-    // Limpiamos absolutamente todas las cookies de control existentes
+    // Limpieza de cookies absolutas
     document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
     document.cookie = "namex_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict; Secure";
     document.cookie = "namex_status=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";

@@ -65,7 +65,72 @@ export default function LoginPage() {
                 return; 
             }
 
-                        // 🟢 SOLUCIÓN DEFINITIVA AL BUILD: 
+            
+            // 1. Calcular expiración exacta de 1 hora compatible con Safari (iOS)
+            const ahora = new Date();
+            ahora.setTime(ahora.getTime() + (1 * 60 * 60 * 1000)); // 1 hora en milisegundos
+            const tiempoExpires = ahora.toUTCString(); // Formato requerido por Apple
+
+            // 2. Guardar Cookies con soporte absoluto para Safari e ITP
+            document.cookie = `namex_userId=${data.userId}; path=/; expires=${tiempoExpires}; SameSite=Lax`;
+            document.cookie = `namex_firstTimeLoad=${data.firstTimeLoad}; path=/; expires=${tiempoExpires}; SameSite=Lax`;
+            document.cookie = `namex_status=${data.status}; path=/; expires=${tiempoExpires}; SameSite=Lax`;
+            document.cookie = `namex_vacationsTaken=${data.vacationsTaken}; path=/; expires=${tiempoExpires}; SameSite=Lax`;
+
+            // 3. Determinar la ruta de destino antes de alterar el estado global de React
+            const esPrimerIngreso = data.firstTimeLoad === true || String(data.firstTimeLoad) === 'true';
+            const esEstatusTemporal = data.status === 'TEMPORAL' || String(data.status).toUpperCase() === 'TEMPORAL';
+            const rutaDestino = (esPrimerIngreso || esEstatusTemporal) ? '/change-password' : '/';
+
+            // 4. Inicializar el contexto de autenticación global
+            login({ 
+                userName: data.userName,      
+                token: data.access_token,     
+                userBalance: data.userBalance,
+                vacationsTaken: data.vacationsTaken,
+                userId: data.userId,
+                firstTimeLoad: data.firstTimeLoad,
+                status: data.status
+            });
+
+            // 5. Redirección forzada
+            router.push(rutaDestino);
+
+
+            /*
+                        // 1. Guardar primero todas las Cookies individuales en texto plano
+            document.cookie = `namex_userId=${data.userId}; path=/; max-age=1800; SameSite=Lax`;
+            document.cookie = `namex_firstTimeLoad=${data.firstTimeLoad}; path=/; max-age=1800; SameSite=Lax`;
+            document.cookie = `namex_status=${data.status}; path=/; max-age=1800; SameSite=Lax`;
+            document.cookie = `namex_vacationsTaken=${data.vacationsTaken}; path=/; max-age=1800; SameSite=Lax`;
+
+            // Determinar estados antes de inicializar la sesión
+            const esPrimerIngreso = data.firstTimeLoad === true || data.firstTimeLoad === 'true';
+            const esEstatusTemporal = data.status === 'TEMPORAL' || data.status === 'temporal';
+            const rutaDestino = (esPrimerIngreso || esEstatusTemporal) ? '/change-password' : '/';
+
+            // 🎯 ENVIAR PARÁMETROS COMPLETOS AL CONTEXTO
+            login({ 
+                userName: data.userName,      
+                token: data.access_token,     
+                userBalance: data.userBalance,
+                vacationsTaken: data.vacationsTaken,
+                userId: data.userId,
+                firstTimeLoad: data.firstTimeLoad, // 👈 ENVIADO AL CONTEXTO
+                status: data.status                // 👈 ENVIADO AL CONTEXTO
+            });
+
+            // Redirección final controlada por el componente
+            router.push(rutaDestino);
+            
+            setTimeout(() => {
+                router.refresh();
+            }, 150);
+            */
+
+
+            /*
+            // 🟢 SOLUCIÓN DEFINITIVA AL BUILD: 
             // Enviamos las 4 propiedades estrictamente requeridas por tu interfaz 'User'
             login({ 
                 userName: data.userName,      
@@ -94,6 +159,8 @@ export default function LoginPage() {
             setTimeout(() => {
                 router.refresh();
             }, 150);
+
+            */
 
         } catch (error) {
             console.error("🚨 Error crítico de red o código en el Frontend:", error);
