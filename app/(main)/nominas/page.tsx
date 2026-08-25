@@ -30,7 +30,7 @@ export default function NominasHistorialPage() {
     // Simulación o llamado a tu API de NestJS
     useEffect(() => {
         // Reemplazar por tu cliente HTTP (Axios/Fetch) configurado con el token
-        fetch('/api/nominas/mis-recibos')
+        /*fetch('/api/nominas/mis-recibos')
             .then((res) => res.json())
             .then((data) => {
                 setRecibos(data);
@@ -39,7 +39,7 @@ export default function NominasHistorialPage() {
             .catch((err) => {
                 console.error("Error cargando recibos:", err);
                 setLoading(false);
-            });
+            });*/
     }, []);
 
     // Plantilla para la etiqueta del Tipo de Nómina
