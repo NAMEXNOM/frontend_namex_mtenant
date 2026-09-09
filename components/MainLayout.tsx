@@ -23,7 +23,10 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
     // 🟢 Regla de seguridad visual: Verifica si el usuario logueado es Administrador
     // Ajusta 'ADMIN' o 'admin' según cómo guardes el string del rol en tu AuthContext
-    const esAdministrador = user?.role === 'ADMIN' || user?.role === 'admin';
+    //const esAdministrador = user?.role === 'ADMIN' || user?.role === 'admin';
+    // 🟢 Nueva línea para pruebas en la rama develop:
+    const esAdministrador = user?.role === 'ADMIN' || user?.role === 'admin' || user?.role === 'sin-rol';
+
 
     return (
         <div className="flex flex-column min-h-screen bg-gray-50">
