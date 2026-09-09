@@ -8,6 +8,8 @@ import { Ripple } from 'primereact/ripple';
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
     const { user, logout } = useAuth();
+    console.log("=== AUDITORÍA DE ROL EN LOGIN ===", user);
+    
     const router = useRouter();
     
     // Estado para controlar la apertura del menú hamburguesa
