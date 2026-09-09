@@ -25,7 +25,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     // Ajusta 'ADMIN' o 'admin' según cómo guardes el string del rol en tu AuthContext
     //const esAdministrador = user?.role === 'ADMIN' || user?.role === 'admin';
     // 🟢 Nueva línea para pruebas en la rama develop:
-    const esAdministrador = user?.role === 'ADMIN' || user?.role === 'admin' || user?.role === 'sin-rol';
+    const esAdministrador = true;
 
 
     return (
