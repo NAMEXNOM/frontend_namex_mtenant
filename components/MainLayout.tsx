@@ -60,6 +60,13 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                     {/* Título de la Sección */}
                     <span className="font-bold text-blue-600 text-lg uppercase">Portal</span>
                     
+                    {/* 🔴 METE ESTO DE FORMA TEMPORAL: */}
+                    <h1 className="text-red-500 font-bold bg-yellow-300 p-2 text-4xl z-5 absolute">
+                        ¡ESTO ES UNA PRUEBA EN VIVO!
+                    </h1>    
+
+
+
                     {/* Botón de Salir (Derecha) */}
                     <Button 
                         icon="pi pi-sign-out" 
