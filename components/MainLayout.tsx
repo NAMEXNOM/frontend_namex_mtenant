@@ -79,7 +79,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                 {/* Fila 2: Saludo al Usuario */}
                 <div className="text-center pb-3 pt-1 border-top-1 border-300 surface-border">
                     <span className="text-sm text-600">
-                        Hola, <b className="text-900">{user?.userName.split(" ")[0] || 'Usuario'}</b>
+                        Hola usuario, <b className="text-900">{user?.userName.split(" ")[0] || 'Usuario'}</b>
                     </span>
                 </div>
             </header>
