@@ -57,7 +57,7 @@ const obtenerTitulo = () => {
 
                 <div className="text-center pb-3 pt-1 border-top-1 border-100">
                     <span className="text-sm text-600">
-                        Hola, <b className="text-900">{user?.userName || 'Tremendo Usuario'}</b>
+                        Hola tremendo, <b className="text-900">{user?.userName || 'Usuario'}</b>
                     </span>
                 </div>
             </header>
