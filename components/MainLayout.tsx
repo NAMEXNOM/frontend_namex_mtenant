@@ -11,45 +11,43 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     console.log("=== AUDITORÍA DE ROL EN LOGIN ===", user);
     
     const router = useRouter();
-    
-    // Estado para controlar la apertura del menú hamburguesa
     const [menuVisible, setMenuVisible] = useState<boolean>(false);
 
-    // Función para navegar de forma limpia y cerrar el menú lateral
     const handleNavigate = (path: string) => {
         setMenuVisible(false);
         router.push(path);
     };
 
-    // 🟢 Regla de seguridad visual: Verifica si el usuario logueado es Administrador
-    // Ajusta 'ADMIN' o 'admin' según cómo guardes el string del rol en tu AuthContext
-    //const esAdministrador = user?.role === 'ADMIN' || user?.role === 'admin';
-    // 🟢 Nueva línea para pruebas en la rama develop:
+    // Forzado en true para pruebas en la rama develop
     const esAdministrador = true;
-
 
     return (
         <div className="flex flex-column min-h-screen bg-gray-50">
+            
+            {/* 🔴 BARRA DE PRUEBA EN VIVO (Franja superior independiente para que sea 100% visible) */}
+            <div className="bg-yellow-300 text-red-700 text-center font-bold p-2 text-sm md:text-base border-bottom-1 border-yellow-400 z-5">
+                ⚠️ ¡ESTO ES UNA PRUEBA EN VIVO CORRIENDO EN DEVELOP!
+            </div>
+
             {/* BARRA SUPERIOR (HEADER) */}
-            <header className="flex flex-column bg-white shadow-1 sticky top-0 z-5">
+            <header className="flex flex-column bg-white shadow-1 sticky top-0 z-4">
                 
                 {/* Fila 1: Navegación, Título y Hamburguesa */}
-                <div className="flex justify-content-between align-items-center p-3 w-full gap-2">
+                <div className="flex justify-content-between align-items-center p-3 w-full">
                     
-                    <div className="flex align-items-center gap-1">
-                        {/* Botón de Regreso (Izquierda) */}
+                    {/* Contenedor Izquierdo (Regreso + Hamburguesa) */}
+                    <div className="flex align-items-center gap-2" style={{ minWidth: '80px' }}>
                         <Button 
                             icon="pi pi-arrow-left" 
                             className="p-button-text p-button-plain p-button-sm" 
                             onClick={() => window.history.back()} 
                         />
 
-                        {/* 🍔 NUEVO: Botón Hamburguesa de Administración */}
-                        {/* Solo se dibuja en pantalla si el usuario tiene permisos de Administrador */}
+                        {/* 🍔 Botón Hamburguesa de Administración */}
                         {esAdministrador && (
                             <Button 
                                 icon="pi pi-bars" 
-                                className="p-button-text p-button-info p-button-sm ml-1" 
+                                className="p-button-rounded p-button-info p-button-text p-button-sm" 
                                 onClick={() => setMenuVisible(true)}
                                 tooltip="Panel de Administrador"
                                 tooltipOptions={{ position: 'bottom' }}
@@ -57,29 +55,26 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                         )}
                     </div>
 
-                    {/* Título de la Sección */}
-                    <span className="font-bold text-blue-600 text-lg uppercase">Portal</span>
+                    {/* Título de la Sección (Centro) */}
+                    <div className="text-center flex-1">
+                        <span className="font-bold text-blue-600 text-lg uppercase tracking-wider">Portal</span>
+                    </div>
                     
-                    {/* 🔴 METE ESTO DE FORMA TEMPORAL: */}
-                    <h1 className="text-red-500 font-bold bg-yellow-300 p-2 text-4xl z-5 absolute">
-                        ¡ESTO ES UNA PRUEBA EN VIVO!
-                    </h1>    
-
-
-
-                    {/* Botón de Salir (Derecha) */}
-                    <Button 
-                        icon="pi pi-sign-out" 
-                        label="Salir" 
-                        className="p-button-text p-button-danger p-button-sm" 
-                        onClick={() => logout()} 
-                    />
+                    {/* Contenedor Derecho (Botón de Salir) */}
+                    <div className="flex justify-content-end" style={{ minWidth: '80px' }}>
+                        <Button 
+                            icon="pi pi-sign-out" 
+                            label="Salir" 
+                            className="p-button-text p-button-danger p-button-sm" 
+                            onClick={() => logout()} 
+                        />
+                    </div>
                 </div>
 
                 {/* Fila 2: Saludo al Usuario */}
-                <div className="text-center pb-3 pt-1 border-top-1 border-300 surface-border">
+                <div className="text-center pb-3 pt-1 border-top-1 border-100 surface-border">
                     <span className="text-sm text-600">
-                        Hola usuario, <b className="text-900">{user?.userName.split(" ")[0] || 'Usuario'}</b>
+                        Hola usuario, <b className="text-900">{user?.userName?.split(" ")[0] || 'Usuario'}</b>
                     </span>
                 </div>
             </header>
@@ -88,7 +83,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             <Sidebar 
                 visible={menuVisible} 
                 onHide={() => setMenuVisible(false)} 
-                position="left" // Despliega cómodamente desde la izquierda
+                position="left" 
                 className="w-full md:w-20rem p-sidebar-sm"
             >
                 <div className="flex align-items-center justify-content-between mb-4 px-2 border-bottom-1 surface-border pb-3">
@@ -98,8 +93,6 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                 </div>
 
                 <ul className="list-none p-0 m-0 overflow-hidden flex flex-column gap-2">
-                    
-                    {/* Opción 1: Enlace directo a tu Formulario de Carga Masiva (La victoria de ayer) */}
                     <li>
                         <button 
                             onClick={() => handleNavigate('/admin/nominas')}
@@ -110,8 +103,6 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                             <Ripple />
                         </button>
                     </li>
-
-                    {/* Opción 2: Espacio listo para la administración de empleados */}
                     <li>
                         <button 
                             onClick={() => handleNavigate('/admin/usuarios')}
@@ -122,8 +113,6 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                             <Ripple />
                         </button>
                     </li>
-
-                    {/* Opción 3: Regresar al menú principal del empleado */}
                     <li className="mt-3 border-top-1 surface-border pt-3">
                         <button 
                             onClick={() => handleNavigate('/')}
@@ -134,7 +123,6 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                             <Ripple />
                         </button>
                     </li>
-
                 </ul>
             </Sidebar>
 
