@@ -18,12 +18,22 @@ interface ReciboNomina {
     monto_neto: number;
 }
 
-// 🔑 UNICA FUNCIÓN DE COOKIE REPARADA (Extrae de forma estricta la posición [2] del token limpio)
-const obtenerTokenCookieGlobal = () => {
+// 🔑 FUNCIÓN DE COOKIE INFALIBLE (Limpia y extrae el token sin expresiones regulares)
+const obtenerTokenCookieGlobal = (): string => {
     if (typeof document === 'undefined') return '';
-    const match = document.cookie.match(new RegExp('(^| )token=([^;]+)'));
-    return (match && match[2]) ? match[2] : '';
+    
+    // Divide todas las cookies por punto y coma
+    const cookies = document.cookie.split(';');
+    
+    // Busca la que empiece con "token="
+    const cookieToken = cookies.find(c => c.trim().startsWith('token='));
+    
+    if (!cookieToken) return '';
+    
+    // Corta el texto después del signo "=" para quedarse solo con el JWT limpio
+    return cookieToken.split('=')[1].trim();
 };
+
 
 export default function MisRecibosPage() {
     const { user } = useAuth();
