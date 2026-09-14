@@ -1,5 +1,27 @@
 import axios from 'axios';
 
+
+const getApiUrl = (): string => {
+  // 🟢 1. CÓDIGO DEL LADO DEL CLIENTE (Navegador)
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    
+    // Si estás desarrollando localmente en tu PC de casa
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'http://localhost:5000'; // En tu PC local NestJS usa el 5000 por defecto
+    }
+
+    // En producción en AWS: Usamos la ruta relativa limpia que Nginx redirige al 5002
+    return '/api';
+  }
+  
+  // 🟢 2. CÓDIGO DEL LADO DEL SERVIDOR (SSR de Next.js en AWS)
+  // 🚀 CORRECCIÓN DEFINITIVA: Apuntamos directo al puerto 5002 que usa NestJS en producción
+  return 'http://127.0.0.1:5002'; 
+};
+
+
+/*
 const getApiUrl = (): string => {
   // 🟢 1. CÓDIGO DEL LADO DEL CLIENTE (Navegador)
   if (typeof window !== 'undefined') {
@@ -18,6 +40,8 @@ const getApiUrl = (): string => {
   // Apunta directo al puerto interno de NestJS para que la página cargue sin colapsar
   return 'http://127.0.0.1:5000'; 
 };
+*/
+
 
 export const API_URL = getApiUrl();
 
