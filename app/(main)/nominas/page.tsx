@@ -1,5 +1,136 @@
 'use client'
 import { useState, useEffect } from 'react';
+import { DataTable } from 'primereact/datatable';
+import { Column } from 'primereact/column';
+import { Button } from 'primereact/button';
+import { Card } from 'primereact/card';
+import { Tag } from 'primereact/tag';
+import { useAuth } from '../../context/AuthContext'; // Ajusta la ruta a tu AuthContext
+
+interface ReciboNomina {
+    id: string;
+    periodo_tipo: string;
+    numero_periodo: number;
+    nomina_tipo: string;
+    fecha_pago: string;
+    url_pdf: string;
+    url_xml: string;
+    monto_neto: number;
+}
+
+export default function MisRecibosPage() {
+    const { user } = useAuth();
+    const [recibos, setRecibos] = useState<ReciboNomina[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
+
+    // 🟢 Cargar el historial de recibos del empleado en tiempo real desde el Backend
+    useEffect(() => {
+        const cargarRecibos = async () => {
+            try {
+                setLoading(true);
+                // Consumimos la ruta relativa para evadir CORS a través de Nginx
+                const response = await fetch('/api/nominas/mis-recibos', {
+                    headers: {
+                        'x-tenant-id': localStorage.getItem('tenant_schema_name') || 'empresademo'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    setRecibos(data);
+                }
+            } catch (error) {
+                console.error("Error cargando recibos:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        cargarRecibos();
+    }, []);
+
+    // 📄 Plantilla visual para descargar el archivo PDF desde AWS S3
+    const actionPdfTemplate = (rowData: ReciboNomina) => {
+        return (
+            <Button 
+                icon="pi pi-file-pdf" 
+                className="p-button-rounded p-button-danger p-button-text text-xl" 
+                tooltip="Descargar PDF"
+                onClick={() => window.open(rowData.url_pdf, '_blank')}
+                disabled={!rowData.url_pdf}
+            />
+        );
+    };
+
+    // 🧾 Plantilla visual para descargar el archivo XML desde AWS S3
+    const actionXmlTemplate = (rowData: ReciboNomina) => {
+        return (
+            <Button 
+                icon="pi pi-code" 
+                className="p-button-rounded p-button-info p-button-text text-xl" 
+                tooltip="Descargar XML"
+                onClick={() => window.open(rowData.url_xml, '_blank')}
+                disabled={!rowData.url_xml}
+            />
+        );
+    };
+
+    // 🏷️ Plantilla para pintar etiquetas bonitas de PrimeReact según el tipo de nómina
+    const nominaTipoTemplate = (rowData: ReciboNomina) => {
+        const severity = rowData.nomina_tipo === 'Ordinaria' ? 'success' : 'warning';
+        return <Tag value={rowData.nomina_tipo} severity={severity} className="text-xs px-2" />;
+    };
+
+    // 📅 Formateador de fechas para que se vea legible (Ej: 14 sep. 2026)
+    const fechaTemplate = (rowData: ReciboNomina) => {
+        if (!rowData.fecha_pago) return 'No registrada';
+        const fecha = new Date(rowData.fecha_pago);
+        return fecha.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
+    };
+
+    return (
+        <div className="p-2 md:p-4 max-w-4xl mx-auto mt-3">
+            <Card className="shadow-2 border-round-xl bg-white">
+                
+                {/* Encabezado de la Tarjeta */}
+                <div className="flex flex-column md:flex-row justify-content-between align-items-center mb-4 gap-3">
+                    <div>
+                        <h1 className="text-900 text-xl font-bold m-0 flex align-items-center gap-2">
+                            <i className="pi pi-wallet text-blue-600 text-2xl"></i> Mis Recibos de Nómina
+                        </h1>
+                        <p className="text-600 text-sm m-0 mt-1">Consulta, visualiza y descarga de forma segura tus comprobantes de pago CFDIs.</p>
+                    </div>
+                </div>
+
+                {/* 📊 Tabla de Datos de PrimeReact */}
+                <DataTable 
+                    value={recibos} 
+                    loading={loading}
+                    emptyMessage="Aún no tienes recibos de nómina cargados en este periodo."
+                    className="p-datatable-sm"
+                    responsiveLayout="stack" // Se vuelve una lista muy bonita en pantallas de celulares
+                    breakpoint="960px"
+                    paginator 
+                    rows={5}
+                    rowsPerPageOptions={[5, 10, 20]}
+                >
+                    <Column field="numero_periodo" header="Periodo" sortable className="font-semibold text-900" headerClassName="bg-gray-100" />
+                    <Column field="periodo_tipo" header="Frecuencia" sortable headerClassName="bg-gray-100" />
+                    <Column header="Tipo Nómina" body={nominaTipoTemplate} sortable headerClassName="bg-gray-100" />
+                    <Column header="Fecha Pago" body={fechaTemplate} sortable headerClassName="bg-gray-100" />
+                    <Column header="PDF" body={actionPdfTemplate} headerClassName="bg-gray-100" style={{ width: '4rem', textAlign: 'center' }} />
+                    <Column header="XML" body={actionXmlTemplate} headerClassName="bg-gray-100" style={{ width: '4rem', textAlign: 'center' }} />
+                </DataTable>
+
+            </Card>
+        </div>
+    );
+}
+
+
+/*
+'use client'
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
@@ -39,7 +170,7 @@ export default function NominasHistorialPage() {
             .catch((err) => {
                 console.error("Error cargando recibos:", err);
                 setLoading(false);
-            });*/
+            });*//*
     }, []);
 
     // Plantilla para la etiqueta del Tipo de Nómina
@@ -109,7 +240,7 @@ export default function NominasHistorialPage() {
 
     return (
         <div className="p-3 mt-4 max-w-5xl mx-auto">
-            {/* Botón para regresar al Home */}
+            {/* Botón para regresar al Home */ /*}
             <div className="mb-4">
                 <Button 
                     label="Volver al Menú" 
@@ -119,14 +250,14 @@ export default function NominasHistorialPage() {
                 />
             </div>
 
-            {/* Contenedor Principal */}
+            {/* Contenedor Principal */ /*}
             <div className="surface-card p-4 sm:p-5 shadow-2 border-round-xl">
                 <div className="mb-4">
                     <h1 className="text-900 text-2xl font-medium mb-1">Historial de Nóminas</h1>
                     <p className="text-600 m-0">Consulta, visualiza y descarga tus recibos fiscales emitidos.</p>
                 </div>
 
-                {/* Tabla Interactiva de PrimeReact */}
+                {/* Tabla Interactiva de PrimeReact */ /*}
                 <DataTable 
                     value={recibosFiltrados} 
                     loading={loading}
@@ -148,3 +279,4 @@ export default function NominasHistorialPage() {
         </div>
     );
 }
+*/
