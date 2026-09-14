@@ -18,27 +18,25 @@ interface ReciboNomina {
     monto_neto: number;
 }
 
+// 🔑 UNICA FUNCIÓN DE COOKIE REPARADA (Extrae de forma estricta la posición [2] del token limpio)
+const obtenerTokenCookieGlobal = () => {
+    if (typeof document === 'undefined') return '';
+    const match = document.cookie.match(new RegExp('(^| )token=([^;]+)'));
+    return (match && match[2]) ? match[2] : '';
+};
+
 export default function MisRecibosPage() {
     const { user } = useAuth();
     const [recibos, setRecibos] = useState<ReciboNomina[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
 
-    // 🟢 Cargar el historial de recibos del empleado en tiempo real desde el Backend
+    // 🟢 1. Cargar el historial de recibos al entrar a la pantalla
     useEffect(() => {
         const cargarRecibos = async () => {
             try {
                 setLoading(true);
+                const tokenReal = obtenerTokenCookieGlobal();
 
-                // 1. 🟢 Corrección de seguridad: Extrae el token de forma segura sin peligro de null
-                const obtenerTokenCookie = () => {
-                    if (typeof document === 'undefined') return '';
-                    const match = document.cookie.match(new RegExp('(^| )token=([^;]+)'));
-                    return (match && match[2]) ? match[2] : '';
-                };
-
-                const tokenReal = obtenerTokenCookie();
-
-                // 2. Hacemos el fetch inyectando el Bearer Authorization
                 const response = await fetch('/api/nominas/mis-recibos', {
                     headers: {
                         'x-tenant-id': localStorage.getItem('tenant_schema_name') || 'empresademo',
@@ -52,7 +50,7 @@ export default function MisRecibosPage() {
                 }
             } catch (error) {
                 console.error("Error cargando recibos:", error);
-            } file_chunk_handling_or_finalizing {
+            } finally {
                 setLoading(false);
             }
         };
@@ -60,39 +58,64 @@ export default function MisRecibosPage() {
         cargarRecibos();
     }, []);
 
-    // 📄 Plantilla visual para descargar el archivo PDF desde el puente seguro
+    // 📄 2. Descargar y abrir archivos de forma segura inyectando el Token
+    const procesarDescargaSegura = async (s3Key: string) => {
+        try {
+            const tokenReal = obtenerTokenCookieGlobal();
+
+            const response = await fetch(`/api/nominas/descargar-archivo?key=${s3Key}`, {
+                headers: {
+                    'x-tenant-id': localStorage.getItem('tenant_schema_name') || 'empresademo',
+                    'Authorization': `Bearer ${tokenReal}`
+                }
+            });
+
+            if (!response.ok) throw new Error('No autorizado o archivo no encontrado');
+
+            // Convertimos la respuesta en un archivo temporal para el navegador
+            const blob = await response.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+
+            // Abrimos el archivo en una pestaña nueva limpia y segura
+            window.open(blobUrl, '_blank');
+        } catch (error) {
+            console.error("Error en la descarga segura:", error);
+        }
+    };
+
+    // Plantilla visual para el botón PDF
     const actionPdfTemplate = (rowData: ReciboNomina) => {
         return (
             <Button 
                 icon="pi pi-file-pdf" 
                 className="p-button-rounded p-button-danger p-button-text text-xl" 
                 tooltip="Ver PDF"
-                onClick={() => window.open(`/api/nominas/descargar-archivo?key=${rowData.url_pdf}`, '_blank')}
+                onClick={() => procesarDescargaSegura(rowData.url_pdf)}
                 disabled={!rowData.url_pdf}
             />
         );
     };
 
-    // 🧾 🟢 Corrección XML: Ahora también viaja a través del puente seguro del backend
+    // Plantilla visual para el botón XML
     const actionXmlTemplate = (rowData: ReciboNomina) => {
         return (
             <Button 
                 icon="pi pi-code" 
                 className="p-button-rounded p-button-info p-button-text text-xl" 
                 tooltip="Descargar XML"
-                onClick={() => window.open(`/api/nominas/descargar-archivo?key=${rowData.url_xml}`, '_blank')}
+                onClick={() => procesarDescargaSegura(rowData.url_xml)}
                 disabled={!rowData.url_xml}
             />
         );
     };
 
-    // 🏷️ Plantilla para pintar etiquetas bonitas de PrimeReact según el tipo de nómina
+    // Plantilla para pintar etiquetas bonitas según el tipo de nómina
     const nominaTipoTemplate = (rowData: ReciboNomina) => {
         const severity = rowData.nomina_tipo === 'Ordinaria' ? 'success' : 'warning';
         return <Tag value={rowData.nomina_tipo} severity={severity} className="text-xs px-2" />;
     };
 
-    // 📅 Formateador de fechas para que se vea legible
+    // Formateador de fechas legible
     const fechaTemplate = (rowData: ReciboNomina) => {
         if (!rowData.fecha_pago) return 'No registrada';
         const fecha = new Date(rowData.fecha_pago);
@@ -103,7 +126,6 @@ export default function MisRecibosPage() {
         <div className="p-2 md:p-4 max-w-4xl mx-auto mt-3">
             <Card className="shadow-2 border-round-xl bg-white">
                 
-                {/* Encabezado de la Tarjeta */}
                 <div className="flex flex-column md:flex-row justify-content-between align-items-center mb-4 gap-3">
                     <div>
                         <h1 className="text-900 text-xl font-bold m-0 flex align-items-center gap-2">
@@ -113,7 +135,6 @@ export default function MisRecibosPage() {
                     </div>
                 </div>
 
-                {/* 📊 Tabla de Datos de PrimeReact */}
                 <DataTable 
                     value={recibos} 
                     loading={loading}
@@ -137,6 +158,7 @@ export default function MisRecibosPage() {
         </div>
     );
 }
+
 
 
 /*
