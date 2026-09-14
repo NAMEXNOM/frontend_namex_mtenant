@@ -55,7 +55,8 @@ export default function AdminUploadNominasPage() {
             setLoading(true);
             
             // Disparo al puerto 5002 del backend que dejamos funcionando al 100%
-            const response = await fetch('http://3.133.86', {
+            //const response = await fetch('http://3.133.86', {
+            const response = await fetch('/api/admin/nominas/upload-mass-zip', {
                 method: 'POST',
                 headers: {
                     'x-tenant-id': localStorage.getItem('tenant_schema_name') || 'empresademo', 
