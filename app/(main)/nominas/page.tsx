@@ -29,11 +29,25 @@ export default function MisRecibosPage() {
             try {
                 setLoading(true);
                 // Consumimos la ruta relativa para evadir CORS a través de Nginx
+                // 🟢 CÓDIGO CORREGIDO Y BLINDADO:
+                // 1. Pequeña función auxiliar para extraer el valor del token de las cookies
+                const obtenerTokenCookie = () => {
+                    if (typeof document === 'undefined') return '';
+                    const match = document.cookie.match(new RegExp('(^| )token=([^;]+)'));
+                    return match ? match[2] : '';
+                };
+
+                const tokenReal = obtenerTokenCookie();
+
+                // 2. Hacemos el fetch inyectando el Bearer Authorization
                 const response = await fetch('/api/nominas/mis-recibos', {
                     headers: {
-                        'x-tenant-id': localStorage.getItem('tenant_schema_name') || 'empresademo'
+                        'x-tenant-id': localStorage.getItem('tenant_schema_name') || 'empresademo',
+                        // 🚀 CRÍTICO: Esto le entrega el pasaporte de seguridad a tu JwtAuthGuard
+                        'Authorization': `Bearer ${tokenReal}` 
                     }
                 });
+
                 
                 if (response.ok) {
                     const data = await response.json();
