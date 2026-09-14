@@ -16,7 +16,7 @@ export default function NextMainLayout({ children }: { children: React.ReactNode
 
     const mostrarRegresar = pathname !== '/';
 
-    // Función nativa de tu proyecto para obtener los títulos
+    // Función nativa para obtener los títulos dinámicos
     const obtenerTitulo = () => {
         if (!pathname) return 'EMPLEADOS';
         const rutaActual = pathname.toLowerCase();
@@ -30,16 +30,13 @@ export default function NextMainLayout({ children }: { children: React.ReactNode
         router.push(path);
     };
 
-    // 🟢 Regla de seguridad: Activado en true para las pruebas visuales en develop
+    // Regla de seguridad: Activado en true para las pruebas en develop
     const esAdministrador = true;
 
     return (
         <div className="flex flex-column min-h-screen bg-gray-50">
             
-            {/* 🔴 BARRA DE PRUEBA EN VIVO: Si esta barra sale, es que ganamos la batalla */}
-            <div className="bg-yellow-300 text-red-700 text-center font-bold p-2 text-sm z-5">
-                ⚠️ ¡ESTO ES UNA PRUEBA EN VIVO CORRIENDO EN DEVELOP!
-            </div>
+            {/* 🟢 Franja amarilla eliminada con éxito para diseño limpio de producción */}
 
             <header className="flex flex-column bg-white shadow-1 sticky top-0 z-5">
                 <div className="flex justify-content-between align-items-center p-3 w-full">
@@ -56,7 +53,7 @@ export default function NextMainLayout({ children }: { children: React.ReactNode
                             <div className="w-2rem h-2rem"></div>
                         )}
 
-                        {/* 🍔 NUEVO: El botón de hamburguesa por fin inyectado en el archivo real */}
+                        {/* Botón de hamburguesa inyectado */}
                         {esAdministrador && (
                             <Button 
                                 icon="pi pi-bars" 
@@ -88,7 +85,7 @@ export default function NextMainLayout({ children }: { children: React.ReactNode
                 </div>
             </header>
 
-            {/* 🍔 PANEL LATERAL DESPLEGABLE (SIDEBAR DE PRIMEREACT) */}
+            {/* PANEL LATERAL DESPLEGABLE (SIDEBAR DE PRIMEREACT) */}
             <Sidebar 
                 visible={menuVisible} 
                 onHide={() => setMenuVisible(false)} 
