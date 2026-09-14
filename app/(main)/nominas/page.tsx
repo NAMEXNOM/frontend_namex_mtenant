@@ -64,7 +64,7 @@ export default function MisRecibosPage() {
     }, []);
 
     // 📄 Plantilla visual para descargar el archivo PDF desde AWS S3
-    const actionPdfTemplate = (rowData: ReciboNomina) => {
+    /*const actionPdfTemplate = (rowData: ReciboNomina) => {
         return (
             <Button 
                 icon="pi pi-file-pdf" 
@@ -74,7 +74,17 @@ export default function MisRecibosPage() {
                 disabled={!rowData.url_pdf}
             />
         );
-    };
+    };*/
+    // Cambia la función de clic en tu tabla del Frontend local:
+const actionPdfTemplate = (rowData: ReciboNomina) => {
+    return (
+        <Button 
+            icon="pi pi-file-pdf" 
+            className="p-button-rounded p-button-danger p-button-text text-xl" 
+            onClick={() => window.open(`/api/nominas/descargar-archivo?key=${rowData.url_pdf}`, '_blank')}
+        />
+    );
+};
 
     // 🧾 Plantilla visual para descargar el archivo XML desde AWS S3
     const actionXmlTemplate = (rowData: ReciboNomina) => {
