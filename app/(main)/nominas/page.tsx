@@ -5,7 +5,7 @@ import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
 import { Card } from 'primereact/card';
 import { Tag } from 'primereact/tag';
-import { useAuth } from '../../context/AuthContext'; // Ajusta la ruta a tu AuthContext
+import { useAuth } from '../../../context/AuthContext'; // Ajusta la ruta a tu AuthContext
 
 interface ReciboNomina {
     id: string;
