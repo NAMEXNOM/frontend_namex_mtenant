@@ -5,7 +5,7 @@ import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
 import { Card } from 'primereact/card';
 import { Tag } from 'primereact/tag';
-import { useAuth } from '../../../context/AuthContext'; // Ajusta la ruta a tu AuthContext
+import { useAuth } from '../../../context/AuthContext'; 
 
 interface ReciboNomina {
     id: string;
@@ -28,13 +28,12 @@ export default function MisRecibosPage() {
         const cargarRecibos = async () => {
             try {
                 setLoading(true);
-                // Consumimos la ruta relativa para evadir CORS a través de Nginx
-                // 🟢 CÓDIGO CORREGIDO Y BLINDADO:
-                // 1. Pequeña función auxiliar para extraer el valor del token de las cookies
+
+                // 1. 🟢 Corrección de seguridad: Extrae el token de forma segura sin peligro de null
                 const obtenerTokenCookie = () => {
                     if (typeof document === 'undefined') return '';
                     const match = document.cookie.match(new RegExp('(^| )token=([^;]+)'));
-                    return match ? match[2] : '';
+                    return (match && match[2]) ? match[2] : '';
                 };
 
                 const tokenReal = obtenerTokenCookie();
@@ -43,19 +42,17 @@ export default function MisRecibosPage() {
                 const response = await fetch('/api/nominas/mis-recibos', {
                     headers: {
                         'x-tenant-id': localStorage.getItem('tenant_schema_name') || 'empresademo',
-                        // 🚀 CRÍTICO: Esto le entrega el pasaporte de seguridad a tu JwtAuthGuard
                         'Authorization': `Bearer ${tokenReal}` 
                     }
                 });
 
-                
                 if (response.ok) {
                     const data = await response.json();
                     setRecibos(data);
                 }
             } catch (error) {
                 console.error("Error cargando recibos:", error);
-            } finally {
+            } file_chunk_handling_or_finalizing {
                 setLoading(false);
             }
         };
@@ -63,37 +60,27 @@ export default function MisRecibosPage() {
         cargarRecibos();
     }, []);
 
-    // 📄 Plantilla visual para descargar el archivo PDF desde AWS S3
-    /*const actionPdfTemplate = (rowData: ReciboNomina) => {
+    // 📄 Plantilla visual para descargar el archivo PDF desde el puente seguro
+    const actionPdfTemplate = (rowData: ReciboNomina) => {
         return (
             <Button 
                 icon="pi pi-file-pdf" 
                 className="p-button-rounded p-button-danger p-button-text text-xl" 
-                tooltip="Descargar PDF"
-                onClick={() => window.open(rowData.url_pdf, '_blank')}
+                tooltip="Ver PDF"
+                onClick={() => window.open(`/api/nominas/descargar-archivo?key=${rowData.url_pdf}`, '_blank')}
                 disabled={!rowData.url_pdf}
             />
         );
-    };*/
-    // Cambia la función de clic en tu tabla del Frontend local:
-const actionPdfTemplate = (rowData: ReciboNomina) => {
-    return (
-        <Button 
-            icon="pi pi-file-pdf" 
-            className="p-button-rounded p-button-danger p-button-text text-xl" 
-            onClick={() => window.open(`/api/nominas/descargar-archivo?key=${rowData.url_pdf}`, '_blank')}
-        />
-    );
-};
+    };
 
-    // 🧾 Plantilla visual para descargar el archivo XML desde AWS S3
+    // 🧾 🟢 Corrección XML: Ahora también viaja a través del puente seguro del backend
     const actionXmlTemplate = (rowData: ReciboNomina) => {
         return (
             <Button 
                 icon="pi pi-code" 
                 className="p-button-rounded p-button-info p-button-text text-xl" 
                 tooltip="Descargar XML"
-                onClick={() => window.open(rowData.url_xml, '_blank')}
+                onClick={() => window.open(`/api/nominas/descargar-archivo?key=${rowData.url_xml}`, '_blank')}
                 disabled={!rowData.url_xml}
             />
         );
@@ -105,7 +92,7 @@ const actionPdfTemplate = (rowData: ReciboNomina) => {
         return <Tag value={rowData.nomina_tipo} severity={severity} className="text-xs px-2" />;
     };
 
-    // 📅 Formateador de fechas para que se vea legible (Ej: 14 sep. 2026)
+    // 📅 Formateador de fechas para que se vea legible
     const fechaTemplate = (rowData: ReciboNomina) => {
         if (!rowData.fecha_pago) return 'No registrada';
         const fecha = new Date(rowData.fecha_pago);
@@ -132,7 +119,7 @@ const actionPdfTemplate = (rowData: ReciboNomina) => {
                     loading={loading}
                     emptyMessage="Aún no tienes recibos de nómina cargados en este periodo."
                     className="p-datatable-sm"
-                    responsiveLayout="stack" // Se vuelve una lista muy bonita en pantallas de celulares
+                    responsiveLayout="stack" 
                     breakpoint="960px"
                     paginator 
                     rows={5}
