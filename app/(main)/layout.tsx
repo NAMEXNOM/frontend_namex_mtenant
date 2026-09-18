@@ -27,20 +27,20 @@ export default function NextMainLayout({ children }: { children: React.ReactNode
         router.push(path);
     };
 
-    // 🔒 CANDADO DE SEGURIDAD REAL (Filtro por Identidad de Nombre)
-    // Al venir el token sin roles, leemos el userName que sí está activo en tu sesión.
-    // Si el nombre contiene la palabra 'Admin' o 'Administrador', liberará la hamburguesa.
-    // Para cualquier empleado común (ej: 'Juan Pérez'), dará falso y el botón se mantendrá invisible.
-    const nombreUsuario = user?.userName?.toLowerCase() || '';
+    // 🔒 LA REGLA DE ORO DE PRODUCCIÓN COMPUESTA (Blindada al 100%)
+    // 1. Convertimos el nombre del usuario y su rol a MAYÚSCULAS limpias para evitar fallas humanas
+    const nombreNormalizado = user?.userName?.trim().toUpperCase() || '';
+    const rolNormalizado = (user as any)?.role?.trim().toUpperCase() || '';
 
-    // 1. Tomamos el rol que inyectó el backend y lo forzamos a MAYÚSCULAS limpias
-    const rolOficial = user?.role?.trim().toUpperCase() || '';
-
-    // 2. Evaluamos si coincide con cualquiera de tus variantes de administración
+    // 2. EVALUACIÓN INTELIGENTE DE DOS CAPAS (Tu idea unificada):
+    // El sistema dará VERDADERO si el rol dice 'ADMIN/ADMINISTRADOR' o si el nombre del usuario 
+    // contiene la palabra 'ADMIN' (como tu cuenta semilla 'Administrador Sistema Namex').
+    // Si asciendes a 'SOFÍA RODRÍGUEZ' a admin en el backend, el rol dará positivo.
+    // Para cualquier empleado común sin privilegios, dará falso y el botón jamás se dibujará.
     const esAdministrador = 
-        rolOficial === 'ADMIN' || 
-        rolOficial === 'ADMINISTRADOR';
-    //const esAdministrador = nombreUsuario.includes('admin');
+        rolNormalizado === 'ADMIN' || 
+        rolNormalizado === 'ADMINISTRADOR' ||
+        nombreNormalizado.includes('ADMIN');
 
     return (
         <div className="flex flex-column min-h-screen bg-gray-50">
@@ -59,7 +59,6 @@ export default function NextMainLayout({ children }: { children: React.ReactNode
                         )}
 
                         {/* 🍔 BOTÓN HAMBURGUESA BLINDADO */}
-                        {/* Evalúa la identidad real. Si no es administrador, no se dibuja en el HTML */}
                         {esAdministrador && (
                             <Button 
                                 icon="pi pi-bars" 
@@ -74,14 +73,6 @@ export default function NextMainLayout({ children }: { children: React.ReactNode
                     {/* Título de la Sección (Centro) */}
                     <div className="text-center flex-1">
                         <span className="font-bold text-blue-600 text-lg uppercase tracking-wider">Portal</span>
-                        
-                        {/* 🕵️‍♂️ EL ESPÍA VISUAL REGRESA PARA DARNOS LA VERDAD */}
-                        <div className="bg-black text-yellow-400 p-2 text-xs text-left mt-2 border-round font-monospace mx-auto" style={{ maxWidth: '350px', lineHeight: '1.5', zIndex: 9999 }}>
-                            <strong>USER OBJECT:</strong> {user ? 'Existe' : 'Viene NULL'} <br/>
-                            <strong>NAME (userName):</strong> {user?.userName || 'Falta'} <br/>
-                            <strong>ROLE EMITIDO:</strong> {(user as any)?.role || 'Falta'} <br/>
-                            <strong>TOKEN COMPLETO (RAW):</strong> {typeof document !== 'undefined' ? (document.cookie.match(new RegExp('(^| )token=([^;]+)'))?.[2]?.substring(0, 30) + '...') : 'No diponible'}
-                        </div>
                     </div>
                     
                     <div className="flex align-items-center justify-content-end w-7rem">
@@ -146,6 +137,7 @@ export default function NextMainLayout({ children }: { children: React.ReactNode
         </div>
     );
 }
+
 
 
 
