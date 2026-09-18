@@ -90,78 +90,12 @@ export default function LoginPage() {
                 vacationsTaken: data.vacationsTaken,
                 userId: data.userId,
                 firstTimeLoad: data.firstTimeLoad,
-                status: data.status
+                status: data.status,
+                role: data.role 
             });
 
             // 5. Redirección forzada
             router.push(rutaDestino);
-
-
-            /*
-                        // 1. Guardar primero todas las Cookies individuales en texto plano
-            document.cookie = `namex_userId=${data.userId}; path=/; max-age=1800; SameSite=Lax`;
-            document.cookie = `namex_firstTimeLoad=${data.firstTimeLoad}; path=/; max-age=1800; SameSite=Lax`;
-            document.cookie = `namex_status=${data.status}; path=/; max-age=1800; SameSite=Lax`;
-            document.cookie = `namex_vacationsTaken=${data.vacationsTaken}; path=/; max-age=1800; SameSite=Lax`;
-
-            // Determinar estados antes de inicializar la sesión
-            const esPrimerIngreso = data.firstTimeLoad === true || data.firstTimeLoad === 'true';
-            const esEstatusTemporal = data.status === 'TEMPORAL' || data.status === 'temporal';
-            const rutaDestino = (esPrimerIngreso || esEstatusTemporal) ? '/change-password' : '/';
-
-            // 🎯 ENVIAR PARÁMETROS COMPLETOS AL CONTEXTO
-            login({ 
-                userName: data.userName,      
-                token: data.access_token,     
-                userBalance: data.userBalance,
-                vacationsTaken: data.vacationsTaken,
-                userId: data.userId,
-                firstTimeLoad: data.firstTimeLoad, // 👈 ENVIADO AL CONTEXTO
-                status: data.status                // 👈 ENVIADO AL CONTEXTO
-            });
-
-            // Redirección final controlada por el componente
-            router.push(rutaDestino);
-            
-            setTimeout(() => {
-                router.refresh();
-            }, 150);
-            */
-
-
-            /*
-            // 🟢 SOLUCIÓN DEFINITIVA AL BUILD: 
-            // Enviamos las 4 propiedades estrictamente requeridas por tu interfaz 'User'
-            login({ 
-                userName: data.userName,      
-                token: data.access_token,     
-                userBalance: data.userBalance,
-                vacationsTaken: data.vacationsTaken, // 👈 Reintegrado aquí como campo requerido
-                userId: data.userId,
-            });
-
-            // Guardar Cookies individuales en texto plano (Esto se queda igual, es seguro)
-            document.cookie = `namex_userId=${data.userId}; path=/; max-age=86400; SameSite=Lax`;
-            document.cookie = `namex_firstTimeLoad=${data.firstTimeLoad}; path=/; max-age=86400; SameSite=Lax`;
-            document.cookie = `namex_status=${data.status}; path=/; max-age=86400; SameSite=Lax`;
-            document.cookie = `namex_vacationsTaken=${data.vacationsTaken}; path=/; max-age=86400; SameSite=Lax`;
-
-            // Redirección inteligente basada en los datos de la respuesta
-            const esPrimerIngreso = data.firstTimeLoad === true || data.firstTimeLoad === 'true';
-            const esEstatusTemporal = data.status === 'TEMPORAL' || data.status === 'temporal';
-
-            if (esPrimerIngreso || esEstatusTemporal) {
-                router.push('/change-password'); 
-            } else {
-                router.push('/');
-            }
-            
-            setTimeout(() => {
-                router.refresh();
-            }, 150);
-
-            */
-
         } catch (error) {
             console.error("🚨 Error crítico de red o código en el Frontend:", error);
             alert("Error de conexión con el servidor. Verifica que el Backend esté encendido.");

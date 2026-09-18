@@ -55,18 +55,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     document.cookie = `namex_status=${userData.status}; path=/; expires=${tiempoExpires}; SameSite=Lax`;
   };
   
-  /*
-  const login = (userData: User) => {
-    // 🎯 FUSIÓN ABSOLUTA: Guardamos todo el objeto incluyendo variables de control
-    setUser(userData);
-    localStorage.setItem('userSession', JSON.stringify(userData));
-    
-    // Inyección de cookies base para el Middleware de Next.js
-    document.cookie = `token=${userData.token}; path=/; max-age=1800; SameSite=Lax`;
-    document.cookie = `namex_firstTimeLoad=${userData.firstTimeLoad}; path=/; max-age=1800; SameSite=Lax`;
-    document.cookie = `namex_status=${userData.status}; path=/; max-age=1800; SameSite=Lax`;
-  };
-*/
 
   const logout = () => {
     setUser(null);

@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext'; 
 import { Button } from 'primereact/button';
@@ -27,20 +27,15 @@ export default function NextMainLayout({ children }: { children: React.ReactNode
         router.push(path);
     };
 
-    // 🔒 LA REGLA DE ORO DE PRODUCCIÓN COMPUESTA (Blindada al 100%)
-    // 1. Convertimos el nombre del usuario y su rol a MAYÚSCULAS limpias para evitar fallas humanas
-    const nombreNormalizado = user?.userName?.trim().toUpperCase() || '';
+    // 🔒 LA REGLA DE ORO DE PRODUCCIÓN (100% Limpia, Dinámica y Tipada)
+    // 1. Convertimos el rol que ahora sí va a transmitir tu AuthContext a MAYÚSCULAS limpias [1.1]
     const rolNormalizado = (user as any)?.role?.trim().toUpperCase() || '';
 
-    // 2. EVALUACIÓN INTELIGENTE DE DOS CAPAS (Tu idea unificada):
-    // El sistema dará VERDADERO si el rol dice 'ADMIN/ADMINISTRADOR' o si el nombre del usuario 
-    // contiene la palabra 'ADMIN' (como tu cuenta semilla 'Administrador Sistema Namex').
-    // Si asciendes a 'SOFÍA RODRÍGUEZ' a admin en el backend, el rol dará positivo.
-    // Para cualquier empleado común sin privilegios, dará falso y el botón jamás se dibujará.
+    // 2. Candado estricto: Eliminamos por completo la dependencia del campo name.
+    // La hamburguesa depende únicamente de que el nivel de acceso sea ADMIN o ADMINISTRADOR [1.1, 1.2].
     const esAdministrador = 
         rolNormalizado === 'ADMIN' || 
-        rolNormalizado === 'ADMINISTRADOR' ||
-        nombreNormalizado.includes('ADMIN');
+        rolNormalizado === 'ADMINISTRADOR';
 
     return (
         <div className="flex flex-column min-h-screen bg-gray-50">
