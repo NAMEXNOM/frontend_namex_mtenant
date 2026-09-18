@@ -5,6 +5,7 @@ export interface LoginResponse {
     email: string;
     userName: string;
     role?: string;
+    empPriv?: string;
     userBalance: number;
     vacationsTaken: number;
 

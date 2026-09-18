@@ -4,7 +4,8 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 interface User {
   userName: string; 
   token: string;
-  role?: string;    
+  role?: string; 
+  empPriv?: string;   
   userBalance: number;
   vacationsTaken: number;
   userId: string;
