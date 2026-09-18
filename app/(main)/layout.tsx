@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { useAuth } from '../../context/AuthContext'; // Ajusta los niveles si está en otra ruta
+import { useAuth } from '../../context/AuthContext'; 
 import { Button } from 'primereact/button';
 import { Sidebar } from 'primereact/sidebar';
 import { Ripple } from 'primereact/ripple';
@@ -13,6 +13,11 @@ export default function NextMainLayout({ children }: { children: React.ReactNode
     const [menuVisible, setMenuVisible] = useState<boolean>(false);
 
     const mostrarRegresar = pathname !== '/';
+
+    // 🟢 AUDITORÍA ACTIVA: Forzar impresión en la consola cada vez que el layout cambie
+    useEffect(() => {
+        console.log("=== AUDITORÍA REAL DE USER EN LAYOUT ===", user);
+    }, [user]);
 
     const obtenerTitulo = () => {
         if (!pathname) return 'EMPLEADOS';
@@ -27,15 +32,12 @@ export default function NextMainLayout({ children }: { children: React.ReactNode
         router.push(path);
     };
 
-    // 🔒 REGLA DE SEGURIDAD REAL (Filtro perimetral anti-intrusos)
-    // El dump de tu base de datos nos reveló que usas la columna "empPriv" para los permisos.
-    // Tu AuthContext mapea esa columna. Validamos si es estrictamente 'admin'.
-    // Adicionalmente, agregamos un respaldo con el campo 'role' por si tu JWT usa esa propiedad.
+    // 🔒 CANDADO DE SEGURIDAD REPARADO (Evaluación estricta del rol del JWT)
     const esAdministrador = 
-        user?.empPriv === 'admin' || 
-        user?.empPriv === 'ADMIN' || 
         user?.role === 'admin' || 
-        user?.role === 'ADMIN';
+        user?.role === 'ADMIN' ||
+        (user as any)?.empPriv === 'admin' ||
+        (user as any)?.empPriv === 'ADMIN';
 
     return (
         <div className="flex flex-column min-h-screen bg-gray-50">
@@ -54,7 +56,6 @@ export default function NextMainLayout({ children }: { children: React.ReactNode
                         )}
 
                         {/* 🍔 BOTÓN HAMBURGUESA BLINDADO */}
-                        {/* El condicional evalúa las credenciales reales. Si es falso, el botón NO se dibuja en el HTML */}
                         {esAdministrador && (
                             <Button 
                                 icon="pi pi-bars" 
@@ -66,9 +67,17 @@ export default function NextMainLayout({ children }: { children: React.ReactNode
                         )}
                     </div>
 
-                    <span className="font-bold text-blue-600 text-lg text-center flex-1 uppercase">
-                        {obtenerTitulo()}
-                    </span>
+                    {/* Título de la Sección (Centro) */}
+                    <div className="text-center flex-1">
+                        <span className="font-bold text-blue-600 text-lg uppercase tracking-wider">Portal</span>
+                        
+                        {/* 🕵️‍♂️ RECUADRO NEGRO ESPÍA VISUAL TEMPORAL */}
+                        <div className="bg-black text-yellow-400 p-2 text-xs text-left mt-2 border-round font-monospace mx-auto" style={{ maxWidth: '300px', lineHeight: '1.5' }}>
+                            <strong>EMAIL:</strong> {user?.email || 'No viene en token'} <br/>
+                            <strong>ROLE:</strong> {user?.role || 'No viene en token'} <br/>
+                            <strong>EMP_PRIV:</strong> {(user as any)?.empPriv || 'No viene en token'}
+                        </div>
+                    </div>
                     
                     <div className="flex align-items-center justify-content-end w-7rem">
                         <Button 
