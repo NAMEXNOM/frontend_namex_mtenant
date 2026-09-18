@@ -111,16 +111,6 @@ export default function NextMainLayout({ children }: { children: React.ReactNode
                             <Ripple />
                         </button>
                     </li>
-                    <li className="mt-3 border-top-1 surface-border pt-3">
-                        <button 
-                            onClick={() => handleNavigate('/')}
-                            className="p-ripple flex align-items-center cursor-pointer p-3 border-round text-700 hover:surface-100 transition-duration-150 transition-colors w-full bg-transparent border-none text-left"
-                        >
-                            <i className="pi pi-home mr-3 text-xl text-purple-500"></i>
-                            <span className="font-medium text-base text-900">Inicio de Empleado</span>
-                            <Ripple />
-                        </button>
-                    </li>
                 </ul>
             </Sidebar>
 
