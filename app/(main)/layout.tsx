@@ -32,7 +32,15 @@ export default function NextMainLayout({ children }: { children: React.ReactNode
     // Si el nombre contiene la palabra 'Admin' o 'Administrador', liberará la hamburguesa.
     // Para cualquier empleado común (ej: 'Juan Pérez'), dará falso y el botón se mantendrá invisible.
     const nombreUsuario = user?.userName?.toLowerCase() || '';
-    const esAdministrador = nombreUsuario.includes('admin');
+
+    // 1. Tomamos el rol que inyectó el backend y lo forzamos a MAYÚSCULAS limpias
+    const rolOficial = user?.role?.trim().toUpperCase() || '';
+
+    // 2. Evaluamos si coincide con cualquiera de tus variantes de administración
+    const esAdministrador = 
+        rolOficial === 'ADMIN' || 
+        rolOficial === 'ADMINISTRADOR';
+    //const esAdministrador = nombreUsuario.includes('admin');
 
     return (
         <div className="flex flex-column min-h-screen bg-gray-50">
