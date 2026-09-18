@@ -14,7 +14,6 @@ export default function NextMainLayout({ children }: { children: React.ReactNode
 
     const mostrarRegresar = pathname !== '/';
 
-    // 🟢 AUDITORÍA ACTIVA: Forzar impresión en la consola cada vez que el layout cambie
     useEffect(() => {
         console.log("=== AUDITORÍA REAL DE USER EN LAYOUT ===", user);
     }, [user]);
@@ -32,12 +31,13 @@ export default function NextMainLayout({ children }: { children: React.ReactNode
         router.push(path);
     };
 
-    // 🔒 CANDADO DE SEGURIDAD REPARADO (Evaluación estricta del rol del JWT)
+    // 🔒 CANDADO DE SEGURIDAD (Evaluación del rol del JWT)
+    const u = user as any;
     const esAdministrador = 
-        user?.role === 'admin' || 
-        user?.role === 'ADMIN' ||
-        (user as any)?.empPriv === 'admin' ||
-        (user as any)?.empPriv === 'ADMIN';
+        u?.role === 'admin' || 
+        u?.role === 'ADMIN' ||
+        u?.empPriv === 'admin' ||
+        u?.empPriv === 'ADMIN';
 
     return (
         <div className="flex flex-column min-h-screen bg-gray-50">
@@ -72,12 +72,11 @@ export default function NextMainLayout({ children }: { children: React.ReactNode
                         <span className="font-bold text-blue-600 text-lg uppercase tracking-wider">Portal</span>
                         
                         {/* 🕵️‍♂️ RECUADRO NEGRO ESPÍA VISUAL TEMPORAL */}
-                        {/* 🕵️‍♂️ RECUADRO NEGRO ESPÍA VISUAL TEMPORAL CORREGIDO */}
                         <div className="bg-black text-yellow-400 p-2 text-xs text-left mt-2 border-round font-monospace mx-auto" style={{ maxWidth: '300px', lineHeight: '1.5' }}>
-                            <strong>EMAIL:</strong> {(user as any)?.email || 'No viene en token'} <br/>
-                            <strong>ROLE:</strong> {(user as any)?.role || 'No viene en token'} <br/>
-                            <strong>EMP_PRIV:</strong> {(user as any)?.empPriv || 'No viene en token'}
-                        
+                            <strong>EMAIL:</strong> {u?.email || 'No viene en token'} <br/>
+                            <strong>ROLE:</strong> {u?.role || 'No viene en token'} <br/>
+                            <strong>EMP_PRIV:</strong> {u?.empPriv || 'No viene en token'}
+                        </div>
                     </div>
                     
                     <div className="flex align-items-center justify-content-end w-7rem">
