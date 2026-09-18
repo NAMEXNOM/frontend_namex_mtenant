@@ -74,6 +74,14 @@ export default function NextMainLayout({ children }: { children: React.ReactNode
                     {/* Título de la Sección (Centro) */}
                     <div className="text-center flex-1">
                         <span className="font-bold text-blue-600 text-lg uppercase tracking-wider">Portal</span>
+                        
+                        {/* 🕵️‍♂️ EL ESPÍA VISUAL REGRESA PARA DARNOS LA VERDAD */}
+                        <div className="bg-black text-yellow-400 p-2 text-xs text-left mt-2 border-round font-monospace mx-auto" style={{ maxWidth: '350px', lineHeight: '1.5', zIndex: 9999 }}>
+                            <strong>USER OBJECT:</strong> {user ? 'Existe' : 'Viene NULL'} <br/>
+                            <strong>NAME (userName):</strong> {user?.userName || 'Falta'} <br/>
+                            <strong>ROLE EMITIDO:</strong> {(user as any)?.role || 'Falta'} <br/>
+                            <strong>TOKEN COMPLETO (RAW):</strong> {typeof document !== 'undefined' ? (document.cookie.match(new RegExp('(^| )token=([^;]+)'))?.[2]?.substring(0, 30) + '...') : 'No diponible'}
+                        </div>
                     </div>
                     
                     <div className="flex align-items-center justify-content-end w-7rem">
