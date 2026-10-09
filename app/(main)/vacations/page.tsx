@@ -1,74 +1,85 @@
-/*
 'use client';
 import { API_URL } from '../../../utils/api';
 import { useEffect, useState } from 'react';
-import { useAuth } from '../../../context/AuthContext'; // Ajusta la ruta a tu AuthContext
+import { useAuth } from '../../../context/AuthContext'; 
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 
 export default function MisVacacionesPage() {
-    const { user } = useAuth(); // Obtenemos el usuario logueado del contexto global
-    const [vacations, setVacations] = useState<any[]>([]); // Tipado básico para el estado
+    const { user } = useAuth(); 
+    const [vacations, setVacations] = useState<any[]>([]); 
     const [loading, setLoading] = useState(true);
 
-// app/(main)/vacations/page.tsx
+    useEffect(() => {
+        let userId = user?.userId;
+        let token = user?.token;
 
-useEffect(() => {
-    // 1. Intentamos obtener los datos del contexto global 'user'
-    let userId = user?.userId;
-    let token = user?.token;
-
-    // 2. Si no están en el contexto (por un F5/refresco), los extraemos de 'userSession' de forma segura
-    if (!userId || !token) {
-        const sessionRaw = localStorage.getItem('userSession');
-        if (sessionRaw) {
-            try {
-                const sessionData = JSON.parse(sessionRaw);
-                userId = sessionData.userId;
-                token = sessionData.token;
-            } catch (e) {
-                console.error("Error al parsear userSession desde el localStorage:", e);
-            }
-        }
-    }
-
-    // 🚨 Bloqueo de seguridad: Si después de buscar en ambos lados aún falta algo, esperamos
-    if (!userId || !token) {
-        console.warn("Esperando el userId y el token de autenticación de userSession...");
-        return;
-    }
-
-    const cargarVacaciones = async () => {
-        try {
-            setLoading(true);
-            //const res = await fetch(`http://localhost:5000/vacations/user?userId=${userId}`, {
-            const res = await fetch(`${API_URL}/vacations/user?userId=${userId}`, {
-                method: 'GET',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}` // Ahora sí llevará el token real de la sesión
+        if (!userId || !token) {
+            const sessionRaw = localStorage.getItem('userSession');
+            if (sessionRaw) {
+                try {
+                    const sessionData = JSON.parse(sessionRaw);
+                    userId = sessionData.userId;
+                    token = sessionData.token;
+                } catch (e) {
+                    console.error("Error al parsear userSession desde el localStorage:", e);
                 }
-            });
-
-            if (res.ok) {
-                const data = await res.json();
-                console.log("Vacaciones del usuario cargadas con éxito:", data);
-                setVacations(data);
-            } else {
-                console.error("Error al responder el servidor. Estatus:", res.status);
             }
-        } catch (error) {
-            console.error("Error de conexión con el backend:", error);
-        } finally {
-            setLoading(false);
         }
+
+        if (!userId || !token) {
+            console.warn("Esperando el userId y el token de autenticación de userSession...");
+            return;
+        }
+
+        const cargarVacaciones = async () => {
+            try {
+                setLoading(true);
+                const res = await fetch(`${API_URL}/vacations/user?userId=${userId}`, {
+                    method: 'GET',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    console.log("Vacaciones del usuario cargadas con éxito:", data);
+                    
+                    // 🟢 REPARADO: Ordenamiento cronológico seguro comparando strings de texto de forma alfabética
+                    const datosOrdenados = data.sort((a: any, b: any) => {
+                        return a.fechaFinal.localeCompare(b.fechaFinal);
+                    });
+
+                    setVacations(datosOrdenados); 
+                } else {
+                    console.error("Error al responder el servidor. Estatus:", res.status);
+                }
+            } catch (error) {
+                console.error("Error de conexión con el backend:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        cargarVacaciones();
+    }, [user?.userId, user?.token]); 
+
+
+    // 🟢 NUEVA FUNCIÓN: Formateador visual seguro que anula al 100% el desfase por zona horaria de JS
+    const formatearFechaSegura = (fechaStr: string) => {
+        if (!fechaStr) return '';
+        // Si el backend manda '2026-12-20', lo dividimos en [ '2026', '12', '20' ]
+        const partes = fechaStr.split('-');
+        if (partes.length !== 3) return fechaStr; // Retorno seguro si viene formateado diferente
+        
+        const [anio, mes, dia] = partes;
+        const anioCorto = anio.slice(-2); // Convierte '2026' a '26' para emular tu formato '2-digit'
+        return `${dia}/${mes}/${anioCorto}`; // Retorna '20/12/26' de forma idéntica y congelada
     };
 
-    cargarVacaciones();
-}, [user?.userId, user?.token]); // Se mantiene la escucha de cambios primitivos
 
-
-    // 🎨 Formateador visual sin marcar errores en TypeScript (tipo: any)
     const tipoRegistroTemplate = (rowData: any) => {
         if (rowData.recordType === 1 || rowData.recordType === "1") {
             return <span className="text-green-600 font-semibold">Abonadas</span>;
@@ -93,19 +104,21 @@ useEffect(() => {
                     field="recordType" 
                     header="Tipo" 
                     style={{ width: '25%' }}
-                    body={tipoRegistroTemplate} // 👈 Vinculación directa de tu plantilla corregida
+                    body={tipoRegistroTemplate} 
                 />
 
+                {/* 🟢 REPARADO: Renderizado directo usando la plantilla de texto plano congelado */}
                 <Column 
                     header="Inicio" 
                     style={{ width: '22%' }}
-                    body={(rowData: any) => new Date(rowData.fechaInicio).toLocaleDateString('es-MX', {day:'2-digit', month:'2-digit', year:'2-digit'})}
+                    body={(rowData: any) => formatearFechaSegura(rowData.fechaInicio)}
                 />
                 
+                {/* 🟢 REPARADO: Renderizado idéntico para la fecha final */}
                 <Column 
                     header="Fin" 
                     style={{ width: '22%' }}
-                    body={(rowData: any) => new Date(rowData.fechaFinal).toLocaleDateString('es-MX', {day:'2-digit', month:'2-digit', year:'2-digit'})}
+                    body={(rowData: any) => formatearFechaSegura(rowData.fechaFinal)}
                 />
 
                 <Column 
@@ -119,8 +132,11 @@ useEffect(() => {
         </div>
     );
 }
-*/
 
+
+
+
+/*
 'use client';
 import { API_URL } from '../../../utils/api';
 import { useEffect, useState } from 'react';
@@ -247,3 +263,4 @@ useEffect(() => {
         </div>
     );
 }
+*/
