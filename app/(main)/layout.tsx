@@ -1,176 +1,274 @@
-'use client';
-import { useState, useEffect, useRef, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import { TabView, TabPanel } from 'primereact/tabview';
-import { Dropdown } from 'primereact/dropdown';
-import { InputText } from 'primereact/inputtext';
+'use client'
+import { useState } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import { useAuth } from '../../context/AuthContext'; 
 import { Button } from 'primereact/button';
-import { Message } from 'primereact/message';
-import { Toast } from 'primereact/toast';
+import { Sidebar } from 'primereact/sidebar';
+import { Ripple } from 'primereact/ripple';
 
-interface Periodo {
-    id: string;
-    nombre: string;
-}
-
-// 📦 Componente Interno que maneja la lógica de la URL
-function NominasTabsContent() {
-    const searchParams = useSearchParams();
+export default function NextMainLayout({ children }: { children: React.ReactNode }) {
+    const { user, logout } = useAuth();
     const router = useRouter();
-    const toast = useRef<Toast>(null);
+    const pathname = usePathname();
+    const [menuVisible, setMenuVisible] = useState<boolean>(false);
 
-    const [activeIndex, setActiveIndex] = useState<number>(0);
-    const [periodos, setPeriodos] = useState<Periodo[]>([]);
-    const [periodoSeleccionado, setPeriodoSeleccionado] = useState<string | null>(null);
-    const [palabraConfirmacion, setPalabraConfirmacion] = useState<string>('');
-    const [loading, setLoading] = useState<boolean>(false);
+    const mostrarRegresar = pathname !== '/';
 
-    // Escucha el menú de hamburguesa (?action=rollback)
-    useEffect(() => {
-        const action = searchParams?.get('action');
-        if (action === 'rollback') {
-            setActiveIndex(1);
-        } else {
-            setActiveIndex(0);
-        }
-    }, [searchParams]);
-
-    // Carga de periodos de prueba
-    useEffect(() => {
-        setPeriodos([
-            { id: '2026-10-Q1', nombre: 'Octubre 2026 - 1ra Quincena' },
-            { id: '2026-09-Q2', nombre: 'Septiembre 2026 - 2da Quincena' },
-            { id: '2026-09-Q1', nombre: 'Septiembre 2026 - 1ra Quincena' },
-        ]);
-    }, []);
-
-    const esConfirmacionValida = 
-        periodoSeleccionado !== null && 
-        palabraConfirmacion.trim() === 'ELIMINAR';
-
-    const handleExecuteRollback = async () => {
-        if (!esConfirmacionValida) return;
-
-        setLoading(true);
-        try {
-            // Simulamos la espera de respuesta del servidor (2 segundos)
-            await new Promise((resolve) => setTimeout(resolve, 2000));
-
-            toast.current?.show({
-                severity: 'success',
-                summary: '¡Rollback Exitoso!',
-                detail: `El periodo ${periodoSeleccionado} fue purgado de la BD y S3 de forma segura.`,
-                life: 5000
-            });
-
-            setPeriodoSeleccionado(null);
-            setPalabraConfirmacion('');
-        } catch (error) {
-            toast.current?.show({
-                severity: 'error',
-                summary: 'Error',
-                detail: 'Ocurrió un error simulado.',
-                life: 3000
-            });
-        } finally {
-            setLoading(false);
-        }
+    const obtenerTitulo = () => {
+        if (!pathname) return 'EMPLEADOS';
+        const rutaActual = pathname.toLowerCase();
+        if (rutaActual.includes('attendance')) return 'ASISTENCIAS';
+        if (rutaActual.includes('vacation')) return 'VACACIONES';
+        return 'EMPLEADOS'; 
     };
 
+    const handleNavigate = (path: string) => {
+        setMenuVisible(false);
+        router.push(path);
+    };
+
+    // 🔒 LA REGLA DE ORO DE PRODUCCIÓN (100% Limpia, Dinámica y Tipada)
+    // 1. Convertimos el rol que ahora sí va a transmitir tu AuthContext a MAYÚSCULAS limpias [1.1]
+    const rolNormalizado = (user as any)?.role?.trim().toUpperCase() || '';
+
+    // 2. Candado estricto: Eliminamos por completo la dependencia del campo name.
+    // La hamburguesa depende únicamente de que el nivel de acceso sea ADMIN o ADMINISTRADOR [1.1, 1.2].
+    const esAdministrador = 
+        rolNormalizado === 'ADMIN' || 
+        rolNormalizado === 'ADMINISTRADOR';
+
     return (
-        <div className="card w-full max-w-4xl mx-auto mt-4 p-4 bg-white shadow-2 border-round">
-            <Toast ref={toast} />
-            
-            <h1 className="text-2xl font-bold text-gray-800 mb-4 flex align-items-center gap-2 border-bottom-1 surface-border pb-3">
-                <i className="pi pi-wallet text-blue-600 text-3xl"></i>
-                Módulo de Nóminas (Control de Periodos)
-            </h1>
-
-            <TabView 
-                activeIndex={activeIndex} 
-                onTabChange={(e) => {
-                    setActiveIndex(e.index);
-                    // Limpia el query param al navegar manualmente
-                    router.push('/admin/nominas');
-                }}
-            >
-                {/* PESTAÑA 1: CARGA MASIVA */}
-                <TabPanel header="Carga Masiva" leftIcon="pi pi-cloud-upload mr-2">
-                    <div className="p-5 text-center border-2 border-dashed border-300 border-round surface-50 min-h-15rem flex flex-column justify-content-center align-items-center mt-3">
-                        <i className="pi pi-file-excel text-5xl text-green-500 mb-3"></i>
-                        <span className="text-lg font-medium text-700">Arrastra aquí el archivo de nóminas o búscalo</span>
-                        <p className="text-sm text-500 mt-1">Formatos aceptados: .xlsx, .csv</p>
-                        <Button label="Seleccionar Archivo" icon="pi pi-search" className="p-button-sm mt-3 p-button-info" />
-                    </div>
-                </TabPanel>
-
-                {/* PESTAÑA 2: REVERSIÓN / ROLLBACK */}
-                <TabPanel header="Reversión (Rollback)" leftIcon="pi pi-history mr-2" headerClassName="text-red-500">
-                    <div className="flex flex-column gap-4 p-2 mt-3">
-                        
-                        <Message 
-                            severity="warn" 
-                            text="Esta acción eliminará de forma permanente todos los recibos de nómina del periodo seleccionado en la Base de Datos y sus archivos PDF correspondientes en el almacén de S3." 
-                            className="w-full justify-content-start font-medium shadow-1"
-                        />
-
-                        {/* Paso 1: Dropdown */}
-                        <div className="flex flex-column gap-2">
-                            <label htmlFor="periodo" className="font-semibold text-gray-700 text-sm">
-                                1. Selecciona el Periodo a Revertir:
-                            </label>
-                            <Dropdown 
-                                id="periodo"
-                                value={periodoSeleccionado} 
-                                options={periodos} 
-                                onChange={(e) => setPeriodoSeleccionado(e.value)} 
-                                optionLabel="nombre" 
-                                optionValue="id"
-                                placeholder="-- Selecciona un periodo activo --" 
-                                className="w-full md:w-25rem"
-                                disabled={loading}
-                            />
-                        </div>
-
-                        {/* Paso 2: Input de Confirmación */}
-                        <div className="flex flex-column gap-2">
-                            <label htmlFor="confirmar" className="font-semibold text-gray-700 text-sm">
-                                2. Para confirmar, escribe la palabra <b className="text-red-600 font-bold">ELIMINAR</b>:
-                            </label>
-                            <InputText 
-                                id="confirmar"
-                                value={palabraConfirmacion} 
-                                onChange={(e) => setPalabraConfirmacion(e.target.value)} 
-                                placeholder="Escribe aquí..." 
-                                className="w-full md:w-25rem p-inputtext-sm font-bold uppercase tracking-wider text-red-600"
-                                disabled={loading || !periodoSeleccionado}
-                                autoComplete="off"
-                            />
-                        </div>
-
-                        {/* Botón de Ejecución */}
-                        <div className="pt-2 border-top-1 surface-border mt-2">
+        <div className="flex flex-column min-h-screen bg-gray-50">
+            <header className="flex flex-column bg-white shadow-1 sticky top-0 z-5">
+                <div className="flex justify-content-between align-items-center p-3 w-full">
+                    
+                    <div className="flex align-items-center justify-content-start gap-2 w-7rem">
+                        {mostrarRegresar ? (
                             <Button 
-                                label={loading ? 'Procesando Reversión...' : 'Ejecutar Reversión Masiva'} 
-                                icon={loading ? 'pi pi-spin pi-spinner' : 'pi pi-exclamation-triangle'} 
-                                className="p-button-danger w-full md:w-auto font-bold shadow-2"
-                                onClick={handleExecuteRollback}
-                                disabled={!esConfirmacionValida || loading}
+                                icon="pi pi-arrow-left" 
+                                className="p-button-text p-button-secondary p-button-sm p-0 h-2rem w-2rem" 
+                                onClick={() => router.back()} 
                             />
-                        </div>
+                        ) : (
+                            <div className="w-2rem h-2rem"></div>
+                        )}
 
+                        {/* 🍔 BOTÓN HAMBURGUESA BLINDADO */}
+                        {esAdministrador && (
+                            <Button 
+                                icon="pi pi-bars" 
+                                className="p-button-text p-button-info p-button-sm p-0 h-2rem w-2rem" 
+                                onClick={() => setMenuVisible(true)}
+                                tooltip="Panel de Administrador"
+                                tooltipOptions={{ position: 'bottom' }}
+                            />
+                        )}
                     </div>
-                </TabPanel>
-            </TabView>
+
+                    {/* Título de la Sección (Centro) */}
+                    <div className="text-center flex-1">
+                        <span className="font-bold text-blue-600 text-lg uppercase tracking-wider">Portal</span>
+                    </div>
+                    
+                    <div className="flex align-items-center justify-content-end w-7rem">
+                        <Button 
+                            icon="pi pi-sign-out" 
+                            label="Salir" 
+                            className="p-button-text p-button-danger p-button-sm" 
+                            onClick={() => logout()} 
+                        />
+                    </div>
+                </div>
+
+                <div className="text-center pb-3 pt-1 border-top-1 border-100">
+                    <span className="text-sm text-600">
+                        Hola, <b className="text-900">{user?.userName || 'Usuario'}</b>
+                    </span>
+                </div>
+            </header>
+
+            {/* PANEL LATERAL DESPLEGABLE (SIDEBAR) */}
+            <Sidebar 
+                visible={menuVisible} 
+                onHide={() => setMenuVisible(false)} 
+                position="left" 
+                className="w-full md:w-20rem p-sidebar-sm"
+            >
+                <div className="flex align-items-center justify-content-between mb-4 px-2 border-bottom-1 surface-border pb-3">
+                    <span className="font-bold text-xl text-900">
+                        <i className="pi pi-cog mr-2 text-blue-500"></i>Panel Admin
+                    </span>
+                </div>
+
+                <ul className="list-none p-0 m-0 overflow-hidden flex flex-column gap-2">
+                    <li>
+                        <button 
+                            onClick={() => handleNavigate('/admin/nominas')}
+                            className="p-ripple flex align-items-center cursor-pointer p-3 border-round text-700 hover:surface-100 transition-duration-150 transition-colors w-full bg-transparent border-none text-left"
+                        >
+                            <i className="pi pi-cloud-upload mr-3 text-xl text-blue-500"></i>
+                            <span className="font-medium text-base text-900">Carga Masiva Nóminas</span>
+                            <Ripple />
+                        </button>
+                    </li>
+                </ul>
+            </Sidebar>
+
+            <main className="flex-1 flex justify-content-center p-3">
+                <div className="w-full">
+                    {children}
+                </div>
+            </main>
         </div>
     );
 }
 
-// 🏛️ Componente Raíz que exporta la página con su Suspense Boundary
-export default function AdminNominasPage() {
+
+
+
+/*
+'use client'
+import { useState } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import { useAuth } from '../../context/AuthContext'; 
+import { Button } from 'primereact/button';
+import { Sidebar } from 'primereact/sidebar';
+import { Ripple } from 'primereact/ripple';
+
+export default function NextMainLayout({ children }: { children: React.ReactNode }) {
+    const { user, logout } = useAuth();
+    const router = useRouter();
+    const pathname = usePathname();
+
+    // Estado para controlar la apertura del menú de hamburguesa
+    const [menuVisible, setMenuVisible] = useState<boolean>(false);
+
+    const mostrarRegresar = pathname !== '/';
+
+    // Función nativa para obtener los títulos dinámicos
+    const obtenerTitulo = () => {
+        if (!pathname) return 'EMPLEADOS';
+        const rutaActual = pathname.toLowerCase();
+        if (rutaActual.includes('attendance')) return 'ASISTENCIAS';
+        if (rutaActual.includes('vacation')) return 'VACACIONES';
+        return 'EMPLEADOS'; 
+    };
+
+    const handleNavigate = (path: string) => {
+        setMenuVisible(false);
+        router.push(path);
+    };
+
+    // Regla de seguridad: Activado en true para las pruebas en develop
+    const esAdministrador = true;
+
     return (
-        <Suspense fallback={<div className="text-center p-5 font-medium text-600">Cargando módulo de nóminas...</div>}>
-            <NominasTabsContent />
-        </Suspense>
+        <div className="flex flex-column min-h-screen bg-gray-50">
+            
+            {/* 🟢 Franja amarilla eliminada con éxito para diseño limpio de producción *//*}
+
+            <header className="flex flex-column bg-white shadow-1 sticky top-0 z-5">
+                <div className="flex justify-content-between align-items-center p-3 w-full">
+                    
+                    {/* Botón de regresar y hamburguesa alineados a la izquierda *//*}
+                    <div className="flex align-items-center justify-content-start gap-2 w-7rem">
+                        {mostrarRegresar ? (
+                            <Button 
+                                icon="pi pi-arrow-left" 
+                                className="p-button-text p-button-secondary p-button-sm p-0 h-2rem w-2rem" 
+                                onClick={() => router.back()} 
+                            />
+                        ) : (
+                            <div className="w-2rem h-2rem"></div>
+                        )}
+
+                        {/* Botón de hamburguesa inyectado *//*}
+                        {esAdministrador && (
+                            <Button 
+                                icon="pi pi-bars" 
+                                className="p-button-text p-button-info p-button-sm p-0 h-2rem w-2rem" 
+                                onClick={() => setMenuVisible(true)}
+                            />
+                        )}
+                    </div>
+
+                    {/* Título de la Sección *//*}
+                    <span className="font-bold text-blue-600 text-lg text-center flex-1 uppercase">
+                        {obtenerTitulo()}
+                    </span>
+                    
+                    <div className="flex align-items-center justify-content-end w-7rem">
+                        <Button 
+                            icon="pi pi-sign-out" 
+                            label="Salir" 
+                            className="p-button-text p-button-danger p-button-sm" 
+                            onClick={() => logout()} 
+                        />
+                    </div>
+                </div>
+
+                <div className="text-center pb-3 pt-1 border-top-1 border-100">
+                    <span className="text-sm text-600">
+                        Hola, <b className="text-900">{user?.userName || 'Usuario'}</b>
+                    </span>
+                </div>
+            </header>
+
+            {/* PANEL LATERAL DESPLEGABLE (SIDEBAR DE PRIMEREACT) *//*}
+            <Sidebar 
+                visible={menuVisible} 
+                onHide={() => setMenuVisible(false)} 
+                position="left" 
+                className="w-full md:w-20rem p-sidebar-sm"
+            >
+                <div className="flex align-items-center justify-content-between mb-4 px-2 border-bottom-1 surface-border pb-3">
+                    <span className="font-bold text-xl text-900">
+                        <i className="pi pi-cog mr-2 text-blue-500"></i>Panel Admin
+                    </span>
+                </div>
+
+                <ul className="list-none p-0 m-0 overflow-hidden flex flex-column gap-2">
+                    <li>
+                        <button 
+                            onClick={() => handleNavigate('/admin/nominas')}
+                            className="p-ripple flex align-items-center cursor-pointer p-3 border-round text-700 hover:surface-100 transition-duration-150 transition-colors w-full bg-transparent border-none text-left"
+                        >
+                            <i className="pi pi-cloud-upload mr-3 text-xl text-blue-500"></i>
+                            <span className="font-medium text-base text-900">Carga Masiva Nóminas</span>
+                            <Ripple />
+                        </button>
+                    </li>
+                    <li>
+                        <button 
+                            onClick={() => handleNavigate('/admin/usuarios')}
+                            className="p-ripple flex align-items-center cursor-pointer p-3 border-round text-700 hover:surface-100 transition-duration-150 transition-colors w-full bg-transparent border-none text-left"
+                        >
+                            <i className="pi pi-users mr-3 text-xl text-green-500"></i>
+                            <span className="font-medium text-base text-900">Gestión de Empleados</span>
+                            <Ripple />
+                        </button>
+                    </li>
+                    <li className="mt-3 border-top-1 surface-border pt-3">
+                        <button 
+                            onClick={() => handleNavigate('/')}
+                            className="p-ripple flex align-items-center cursor-pointer p-3 border-round text-700 hover:surface-100 transition-duration-150 transition-colors w-full bg-transparent border-none text-left"
+                        >
+                            <i className="pi pi-home mr-3 text-xl text-purple-500"></i>
+                            <span className="font-medium text-base text-900">Inicio de Empleado</span>
+                            <Ripple />
+                        </button>
+                    </li>
+                </ul>
+            </Sidebar>
+
+            <main className="flex-1 flex justify-content-center p-3">
+                <div className="w-full">
+                    {children}
+                </div>
+            </main>
+        </div>
     );
 }
+
+
+*/
