@@ -27,7 +27,7 @@ function NominasTabsContent() {
 
     // Escucha el menú de hamburguesa (?action=rollback)
     useEffect(() => {
-        const action = searchParams.get('action');
+        const action = searchParams?.get('action');
         if (action === 'rollback') {
             setActiveIndex(1);
         } else {
