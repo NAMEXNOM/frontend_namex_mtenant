@@ -135,6 +135,55 @@ function NominasModuleContent() {
         }
     };
 
+       // --- ACCIÓN: REVERSIÓN (ROLLBACK) ---
+    const handleExecuteRollback = async () => {
+        if (!esConfirmacionRollbackValida || !periodoARevertir) return;
+
+        try {
+            setLoadingRollback(true);
+            const tokenReal = obtenerTokenCookieGlobal();
+
+            // Desestructuramos el ID simulado "Semanal-14-Ordinaria" 
+            const [periodo_tipo, numero_periodo, nomina_tipo] = periodoARevertir.split('-');
+
+            const response = await fetch('/api/admin/nominas/rollback', { // URL alineada al controlador
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-tenant-id': localStorage.getItem('tenant_schema_name') || 'empresademo', 
+                    'Authorization': `Bearer ${tokenReal}`
+                },
+                // Enviamos los metadatos estructurados exactos que pide el nuevo RollbackNominaDto
+                body: JSON.stringify({ 
+                    periodo_tipo, 
+                    numero_periodo, 
+                    nomina_tipo 
+                })
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                toast.current?.show({ 
+                    severity: 'success', 
+                    summary: '¡Rollback Exitoso!', 
+                    detail: result.message, 
+                    life: 6000 
+                });
+                setPeriodoARevertir(null);
+                setPalabraConfirmacion('');
+            } else {
+                throw new Error(result.message || 'Error al procesar el rollback en el servidor.');
+            }
+        } catch (error: any) {
+            toast.current?.show({ severity: 'error', summary: 'Error de Servidor', detail: error.message, life: 5000 });
+        } finally {
+            setLoadingRollback(false);
+        }
+    };
+
+   
+   /*
     // --- ACCIÓN: REVERSIÓN (ROLLBACK) ---
     const handleExecuteRollback = async () => {
         if (!esConfirmacionRollbackValida) return;
@@ -173,6 +222,8 @@ function NominasModuleContent() {
             setLoadingRollback(false);
         }
     };
+
+    */
 
     return (
         <div className="p-3 mt-4 max-w-xl mx-auto">
