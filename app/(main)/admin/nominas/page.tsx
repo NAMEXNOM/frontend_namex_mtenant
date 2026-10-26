@@ -64,10 +64,13 @@ function NominasModuleContent() {
     }, [searchParams]);
 
     // 🔄 CONEXIÓN REAL: Consulta los periodos activos existentes en PostgreSQL
+        // 🔄 Carga de periodos disponibles REALES desde la API del Servidor
     useEffect(() => {
         const consultarPeriodosReales = async () => {
             try {
                 const tokenReal = obtenerTokenCookieGlobal();
+                
+                // 🚀 Alineamos la URL exacta basándonos en tu formulario POST exitoso
                 const response = await fetch('/api/admin/nominas/periodos-activos', {
                     method: 'GET',
                     headers: {
@@ -78,10 +81,10 @@ function NominasModuleContent() {
                 
                 const result = await response.json();
                 if (response.ok && result.success) {
-                    setPeriodosHistorial(result.data); // Setea el arreglo dinámico
+                    setPeriodosHistorial(result.data);
                 }
             } catch (error) {
-                console.error("Error al consultar periodos reales del servidor:", error);
+                console.error("Error al obtener el historial de periodos:", error);
             }
         };
 
@@ -89,6 +92,9 @@ function NominasModuleContent() {
             consultarPeriodosReales();
         }
     }, [activeIndex]);
+
+
+    
 
     // 🔒 Validación estricta del candado de seguridad
     const esConfirmacionRollbackValida = 
