@@ -37,7 +37,7 @@ function NominasModuleContent() {
     const [loadingUpload, setLoadingUpload] = useState<boolean>(false);
 
     // --- ESTADOS: REVERSIÓN (ROLLBACK) ---
-    const [periodosHistorial, setPeriodosHistorial] = useState<PeriodoHistorial[]>([]);
+    const [periodosHistorial, setPeriodosHistorial] = useState<PeriodoHistorial[]>([]); // 🟢 Inicializa vacío sin basura
     const [periodoARevertir, setPeriodoARevertir] = useState<string | null>(null);
     const [palabraConfirmacion, setPalabraConfirmacion] = useState<string>('');
     const [loadingRollback, setLoadingRollback] = useState<boolean>(false);
@@ -63,14 +63,32 @@ function NominasModuleContent() {
         }
     }, [searchParams]);
 
-    // Carga de periodos disponibles para el Rollback (Simulación)
+    // 🔄 CONEXIÓN REAL: Consulta los periodos activos existentes en PostgreSQL
     useEffect(() => {
-        setPeriodosHistorial([
-            { id: 'Semanal-14-Ordinaria', nombre: 'Semanal - Periodo 14 (Ordinaria)' },
-            { id: 'Quincenal-2-Ordinaria', nombre: 'Quincenal - Periodo 2 (Ordinaria)' },
-            { id: 'Mensual-1-Especial', nombre: 'Mensual - Periodo 1 (Especial)' }
-        ]);
-    }, []);
+        const consultarPeriodosReales = async () => {
+            try {
+                const tokenReal = obtenerTokenCookieGlobal();
+                const response = await fetch('/api/admin/nominas/periodos-activos', {
+                    method: 'GET',
+                    headers: {
+                        'x-tenant-id': localStorage.getItem('tenant_schema_name') || 'empresademo', 
+                        'Authorization': `Bearer ${tokenReal}`
+                    }
+                });
+                
+                const result = await response.json();
+                if (response.ok && result.success) {
+                    setPeriodosHistorial(result.data); // Setea el arreglo dinámico
+                }
+            } catch (error) {
+                console.error("Error al consultar periodos reales del servidor:", error);
+            }
+        };
+
+        if (activeIndex === 1) {
+            consultarPeriodosReales();
+        }
+    }, [activeIndex]);
 
     // 🔒 Validación estricta del candado de seguridad
     const esConfirmacionRollbackValida = 
@@ -125,6 +143,7 @@ function NominasModuleContent() {
                 });
                 setNumeroPeriodo('');
                 setArchivoZip(null);
+                setPeriodoARevertir(null);
             } else {
                 throw new Error(result.message || 'Error al procesar el archivo en el servidor.');
             }
@@ -135,7 +154,10 @@ function NominasModuleContent() {
         }
     };
 
-       // --- ACCIÓN: REVERSIÓN (ROLLBACK) ---
+
+
+    
+    // --- ACCIÓN: REVERSIÓN (ROLLBACK) ---
     const handleExecuteRollback = async () => {
         if (!esConfirmacionRollbackValida || !periodoARevertir) return;
 
@@ -143,17 +165,17 @@ function NominasModuleContent() {
             setLoadingRollback(true);
             const tokenReal = obtenerTokenCookieGlobal();
 
-            // Desestructuramos el ID simulado "Semanal-14-Ordinaria" 
+            // Desestructuramos el ID dinámico "Semanal-14-Ordinaria" para enviarlo desagregado
             const [periodo_tipo, numero_periodo, nomina_tipo] = periodoARevertir.split('-');
 
-            const response = await fetch('/api/admin/nominas/rollback', { // URL alineada al controlador
+            const response = await fetch('/api/admin/nominas/rollback', {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
                     'x-tenant-id': localStorage.getItem('tenant_schema_name') || 'empresademo', 
                     'Authorization': `Bearer ${tokenReal}`
                 },
-                // Enviamos los metadatos estructurados exactos que pide el nuevo RollbackNominaDto
+                // Cuerpo alineado estrictamente con el DTO del backend
                 body: JSON.stringify({ 
                     periodo_tipo, 
                     numero_periodo, 
@@ -167,52 +189,26 @@ function NominasModuleContent() {
                 toast.current?.show({ 
                     severity: 'success', 
                     summary: '¡Rollback Exitoso!', 
-                    detail: result.message, 
-                    life: 6000 
-                });
-                setPeriodoARevertir(null);
-                setPalabraConfirmacion('');
-            } else {
-                throw new Error(result.message || 'Error al procesar el rollback en el servidor.');
-            }
-        } catch (error: any) {
-            toast.current?.show({ severity: 'error', summary: 'Error de Servidor', detail: error.message, life: 5000 });
-        } finally {
-            setLoadingRollback(false);
-        }
-    };
-
-   
-   /*
-    // --- ACCIÓN: REVERSIÓN (ROLLBACK) ---
-    const handleExecuteRollback = async () => {
-        if (!esConfirmacionRollbackValida) return;
-
-        try {
-            setLoadingRollback(true);
-            const tokenReal = obtenerTokenCookieGlobal();
-
-            const response = await fetch('/api/nominas/rollback', {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-tenant-id': localStorage.getItem('tenant_schema_name') || 'empresademo', 
-                    'Authorization': `Bearer ${tokenReal}`
-                },
-                body: JSON.stringify({ periodoId: periodoARevertir })
-            });
-
-            const result = await response.json();
-
-            if (response.ok && result.success) {
-                toast.current?.show({ 
-                    severity: 'success', 
-                    summary: '¡Rollback Exitoso!', 
                     detail: result.message || 'El periodo fue purgado de la base de datos y de AWS S3.', 
                     life: 6000 
                 });
+                
+                // Forzamos la limpieza de selecciones
                 setPeriodoARevertir(null);
                 setPalabraConfirmacion('');
+                
+                // 🔄 Refrescar la lista de periodos activos para remover el que se acaba de eliminar
+                const responseRefresh = await fetch('/api/admin/nominas/periodos-activos', {
+                    method: 'GET',
+                    headers: {
+                        'x-tenant-id': localStorage.getItem('tenant_schema_name') || 'empresademo', 
+                        'Authorization': `Bearer ${tokenReal}`
+                    }
+                });
+                const resultRefresh = await responseRefresh.json();
+                if (responseRefresh.ok && resultRefresh.success) {
+                    setPeriodosHistorial(resultRefresh.data);
+                }
             } else {
                 throw new Error(result.message || 'Error al procesar el rollback en el servidor.');
             }
@@ -222,8 +218,6 @@ function NominasModuleContent() {
             setLoadingRollback(false);
         }
     };
-
-    */
 
     return (
         <div className="p-3 mt-4 max-w-xl mx-auto">
@@ -248,7 +242,7 @@ function NominasModuleContent() {
                     activeIndex={activeIndex} 
                     onTabChange={(e) => {
                         setActiveIndex(e.index);
-                        router.push('/admin/nominas'); // Resetea el query param al cambiar manualmente
+                        router.push('/admin/nominas'); // Resetea el query param al conmutar manualmente
                     }}
                 >
                     {/* PESTAÑA A: DISPERSIÓN / CARGA MASIVA */}
@@ -301,6 +295,7 @@ function NominasModuleContent() {
                                     placeholder="-- Selecciona un periodo activo --" 
                                     className="w-full"
                                     disabled={loadingRollback}
+                                    emptyMessage="No se encontraron periodos con recibos activos en este tenant."
                                 />
                             </div>
 
@@ -336,16 +331,22 @@ function NominasModuleContent() {
     );
 }
 
-// 🏛️ Componente exportado con el Suspense Boundary necesario para Next.js
+
+
+
+// 🏛️ Componente Raíz que exporta la página con su Suspense Boundary para Next.js (App Router)
 export default function AdminUploadNominasPage() {
     return (
-        <Suspense fallback={<div className="text-center p-5 font-medium text-600">Cargando panel de administración...</div>}>
+        <Suspense fallback={
+            <div className="flex flex-column justify-content-center align-items-center min-h-screen text-600 font-medium p-5">
+                <i className="pi pi-spin pi-spinner text-3xl text-blue-500 mb-3"></i>
+                <span>Cargando panel de administración...</span>
+            </div>
+        }>
             <NominasModuleContent />
         </Suspense>
     );
 }
-
-
 
 
 
