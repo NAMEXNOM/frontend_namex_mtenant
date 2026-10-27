@@ -99,7 +99,7 @@ function NominasModuleContent() {
     // 🔒 Validación estricta del candado de seguridad
     const esConfirmacionRollbackValida = 
         periodoARevertir !== null && 
-        palabraConfirmacion.trim() === 'ELIMINAR';
+        palabraConfirmacion.trim().toUpperCase() === 'ELIMINAR';
 
     const onTemplateSelect = (e: any) => {
         const file = e.files[0]; 
@@ -314,11 +314,13 @@ function NominasModuleContent() {
                                     value={palabraConfirmacion} 
                                     onChange={(e) => setPalabraConfirmacion(e.target.value)} 
                                     placeholder="Escribe aquí..." 
-                                    className="w-full p-3 text-base text-red-600 font-bold uppercase tracking-wider"
+                                    // 🚀 Eliminamos 'uppercase' para que el usuario vea reflejado su teclado real
+                                    className="w-full p-3 text-base text-red-600 font-bold tracking-wider" 
                                     disabled={loadingRollback || !periodoARevertir}
                                     autoComplete="off"
                                 />
                             </div>
+
 
                             <div className="pt-2 border-top-1 surface-border">
                                 <Button 
