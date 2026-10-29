@@ -53,6 +53,21 @@ function NominasModuleContent() {
         { label: 'Especial (Aguinaldo, Bonos)', value: 'Especial' }
     ];
 
+        // 🚀 NUEVA FUNCIÓN EXTRACTORA DINÁMICA POR SUBDOMINIO
+    const obtenerTenantPorSubdominio = (): string => {
+        if (typeof window === 'undefined') return 'sgi';
+        const host = window.location.hostname;
+        const partes = host.split('.');
+        
+        // Si hay un subdominio válido (ej: ://namex.com)
+        if (partes.length > 1 && !host.includes('localhost') && !/^\d/.test(host)) {
+            return partes[0].toLowerCase(); 
+        }
+        
+        // Fallback para cuando estés desarrollando en localhost
+        return 'empresademo'; 
+    };
+
     // Escucha las peticiones de navegación del menú de hamburguesa (?action=rollback)
     useEffect(() => {
         const action = searchParams?.get('action');
@@ -64,7 +79,7 @@ function NominasModuleContent() {
     }, [searchParams]);
 
     // 🔄 CONEXIÓN REAL: Consulta los periodos activos existentes en PostgreSQL
-        // 🔄 Carga de periodos disponibles REALES desde la API del Servidor
+    // 🔄 Carga de periodos disponibles REALES desde la API del Servidor
     useEffect(() => {
         const consultarPeriodosReales = async () => {
             try {
@@ -74,7 +89,8 @@ function NominasModuleContent() {
                 const response = await fetch('/api/admin/nominas/periodos-activos', {
                     method: 'GET',
                     headers: {
-                        'x-tenant-id': localStorage.getItem('tenant_schema_name') || 'empresademo', 
+                        // 🔥 REEMPLAZADO: Ahora lee el subdominio de forma 100% dinámica
+                        'x-tenant-id': obtenerTenantPorSubdominio(), 
                         'Authorization': `Bearer ${tokenReal}`
                     }
                 });
@@ -92,7 +108,6 @@ function NominasModuleContent() {
             consultarPeriodosReales();
         }
     }, [activeIndex]);
-
 
     
 
@@ -132,11 +147,13 @@ function NominasModuleContent() {
             const response = await fetch('/api/admin/nominas/upload-mass-zip', {
                 method: 'POST',
                 headers: {
-                    'x-tenant-id': localStorage.getItem('tenant_schema_name') || 'empresademo', 
+                    // 🔥 REEMPLAZADO AQUÍ TAMBIÉN:
+                    'x-tenant-id': obtenerTenantPorSubdominio(), 
                     'Authorization': `Bearer ${tokenReal}`
                 },
                 body: formData
             });
+
 
             const result = await response.json();
 
