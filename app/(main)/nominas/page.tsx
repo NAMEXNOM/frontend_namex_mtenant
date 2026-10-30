@@ -18,22 +18,29 @@ interface ReciboNomina {
     monto_neto: number;
 }
 
-// 🔑 FUNCIÓN DE COOKIE INFALIBLE (Limpia y extrae el token sin expresiones regulares)
+// 🔑 FUNCIÓN DE COOKIE INFALIBLE
 const obtenerTokenCookieGlobal = (): string => {
     if (typeof document === 'undefined') return '';
-    
-    // Divide todas las cookies por punto y coma
     const cookies = document.cookie.split(';');
-    
-    // Busca la que empiece con "token="
     const cookieToken = cookies.find(c => c.trim().startsWith('token='));
-    
     if (!cookieToken) return '';
-    
-    // Corta el texto después del signo "=" para quedarse solo con el JWT limpio
     return cookieToken.split('=')[1].trim();
 };
 
+// 🚀 NUEVA FUNCIÓN EXTRACTORA DINÁMICA POR SUBDOMINIO (BLINDADA)
+const obtenerTenantPorSubdominio = (): string => {
+    if (typeof window === 'undefined') return 'sgi';
+    const host = window.location.hostname; // Captura el host limpio sin puertos
+    const partes = host.split('.');
+    
+    // Si hay un subdominio válido (no es localhost ni una IP directa)
+    if (partes.length > 1 && !host.includes('localhost') && !/^\d/.test(host)) {
+        return partes[0].toLowerCase(); // 🟢 ¡Perfecto! Extrae "sgi", "empresademo", etc.
+    }
+    
+    // Fallback de desarrollo para que puedas seguir programando en localhost de forma fluida
+    return 'empresademo'; 
+};
 
 export default function MisRecibosPage() {
     const { user } = useAuth();
@@ -49,7 +56,8 @@ export default function MisRecibosPage() {
 
                 const response = await fetch('/api/nominas/mis-recibos', {
                     headers: {
-                        'x-tenant-id': localStorage.getItem('tenant_schema_name') || 'empresademo',
+                        // 🔥 REEMPLAZADO: Ahora es dinámico
+                        'x-tenant-id': obtenerTenantPorSubdominio(),
                         'Authorization': `Bearer ${tokenReal}` 
                     }
                 });
@@ -75,23 +83,22 @@ export default function MisRecibosPage() {
 
             const response = await fetch(`/api/nominas/descargar-archivo?key=${s3Key}`, {
                 headers: {
-                    'x-tenant-id': localStorage.getItem('tenant_schema_name') || 'empresademo',
+                    // 🔥 REEMPLAZADO: Ahora es dinámico
+                    'x-tenant-id': obtenerTenantPorSubdominio(),
                     'Authorization': `Bearer ${tokenReal}`
                 }
             });
 
             if (!response.ok) throw new Error('No autorizado o archivo no encontrado');
 
-            // Convertimos la respuesta en un archivo temporal para el navegador
             const blob = await response.blob();
             const blobUrl = window.URL.createObjectURL(blob);
-
-            // Abrimos el archivo en una pestaña nueva limpia y segura
             window.open(blobUrl, '_blank');
         } catch (error) {
             console.error("Error en la descarga segura:", error);
         }
     };
+
 
     // Plantilla visual para el botón PDF
     const actionPdfTemplate = (rowData: ReciboNomina) => {

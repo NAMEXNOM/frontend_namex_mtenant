@@ -195,7 +195,8 @@ function NominasModuleContent() {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
-                    'x-tenant-id': localStorage.getItem('tenant_schema_name') || 'empresademo', 
+                    // 🔥 REEMPLAZADO: Ahora lee de forma 100% nativa el subdominio del servidor
+                    'x-tenant-id': obtenerTenantPorSubdominio(), 
                     'Authorization': `Bearer ${tokenReal}`
                 },
                 // Cuerpo alineado estrictamente con el DTO del backend
@@ -205,6 +206,7 @@ function NominasModuleContent() {
                     nomina_tipo 
                 })
             });
+
 
             const result = await response.json();
 
